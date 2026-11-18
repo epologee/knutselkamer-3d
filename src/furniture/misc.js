@@ -15,11 +15,11 @@ function cymbal(m, radius, [x, y, z], tilt, roll = 0) {
   return disc
 }
 
-function pedal(m, [x, z]) {
+function pedal(m, [x, z], restsOn) {
   const plate = box([0.09, 0.012, 0.3], [0, 0, 0], m.steel)
-  plate.position.set(x, 0.05, z)
+  plate.position.set(x, restsOn + 0.05, z)
   plate.rotation.x = 0.16
-  return group(box([0.11, 0.015, 0.34], [x, 0, z], m.black), plate)
+  return group(box([0.11, 0.015, 0.34], [x, restsOn, z], m.black), plate)
 }
 
 export const drumKit = {
@@ -27,6 +27,7 @@ export const drumKit = {
   size: [1.5, 1.35, 1.0],
   build(m) {
     const tube = 0.019
+    const onRug = 0.013
     const back = -0.45
     const wing = 0.05
     const bar = 0.72
@@ -65,11 +66,11 @@ export const drumKit = {
       arm([-0.45, 0.95, back], [-0.3, 1.1, back - 0.02]),
       arm([0.45, 0.95, back], [0.55, 1.0, -0.34]),
 
-      box([0.3, 0.012, 0.5], [0.11, 0, -0.1], m.paper),
+      box([0.3, 0.012, 0.5], [0.11, onRug, -0.1], m.paper),
       box([0.24, 0.34, 0.09], [0.11, 0.012, -0.3], m.black, { radius: 0.02 }),
       kickHead,
-      pedal(m, [0.11, -0.07]),
-      pedal(m, [-0.36, 0.15]),
+      pedal(m, [0.11, -0.07], onRug + 0.012),
+      pedal(m, [-0.36, 0.15], onRug),
       box([0.24, 0.07, 0.16], [-0.62, 0.86, -0.2], m.blackGloss, { radius: 0.012 }),
       arm([-0.6, bar, -0.15], [-0.62, 0.86, -0.2]),
       rod([0.32, 0.95, back], [0.32, 1.12, back - 0.03], 0.007, m.blackMetal),
