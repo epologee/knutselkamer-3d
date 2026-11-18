@@ -1,4 +1,4 @@
-import { catalog } from './layout.js'
+import { catalog, oneSleepingPlace } from './layout.js'
 import { DOOR_SWING, ENTRANCE, RADIATOR_ZONE, ROOM } from './room.js'
 import { bedBlockers, covers, footprintOf, measure, surfacesOf } from './surfaces.js'
 
@@ -14,7 +14,7 @@ const REACH = [
 ]
 
 export function piecesFor(items) {
-  return items
+  return oneSleepingPlace(items)
     .filter((item) => !item.removed)
     .map((item) => ({ item: { ...item }, spec: catalog[item.type], object: { position: { x: item.x, z: item.z }, rotation: { y: (item.rotation * Math.PI) / 180 } } }))
 }

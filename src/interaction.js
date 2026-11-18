@@ -82,7 +82,7 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
     const planned = arrangementItems()
     const moved = pieces.some(({ item }) => {
       const original = planned.find((entry) => entry.id === item.id)
-      return original.x !== item.x || original.z !== item.z || original.rotation !== item.rotation || original.variant !== item.variant || Boolean(original.bedOpen) !== Boolean(item.bedOpen)
+      return original.x !== item.x || original.z !== item.z || original.rotation !== item.rotation || original.variant !== item.variant || Boolean(original.bedOpen) !== Boolean(item.bedOpen) || Boolean(original.removed) !== Boolean(item.removed)
     })
     resetButton.hidden = !moved
   }
@@ -109,6 +109,11 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
     if (!piece.item.variant) delete piece.item.variant
     rebuild(piece)
     tag(piece)
+    const bedInside = piece.item.variant === 'bed'
+    for (const sleeper of pieces.filter((each) => each.spec.sleeps)) {
+      sleeper.item.removed = bedInside
+      sleeper.object.visible = !bedInside
+    }
     record(piece)
     select(piece)
     invalidateShadows()

@@ -50,6 +50,8 @@ expect(await page.isVisible('#fold'), 'a built-in bed should offer to fold out')
 const withBed = { floor: await areaOf(0), table: await areaOf(1), top: await areaOf(2) }
 expect(withBed.table > before.table, `the bed desk should add table height, got ${withBed.table}`)
 expect(withBed.top === before.top, `cabinet tops should not change, got ${withBed.top}`)
+expect(withBed.floor > before.floor, `the sleeper armchair should leave when the bed comes in, floor stayed ${withBed.floor}`)
+expect((await saved())?.removed === false && JSON.parse(await page.evaluate(() => localStorage.getItem('knutselkamer-layout-v2'))).armchair.removed === true, 'the armchair should be saved as removed')
 await page.screenshot({ path: `${outputPrefix}-closed.png` })
 
 await page.click('#fold')
@@ -71,6 +73,7 @@ expect((await areaOf(0)) === open.floor, 'an unfolded bed should survive a reloa
 await page.click('#reset')
 await page.waitForTimeout(500)
 expect((await areaOf(1)) === before.table, 'reset should take the bed out again')
+expect((await areaOf(0)) === before.floor, 'reset should bring the sleeper armchair back')
 
 await browser.close()
 for (const failure of failures) console.log(`FAIL ${failure}`)

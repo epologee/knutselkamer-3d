@@ -32,36 +32,13 @@ export const arrangements = [
   {
     id: 'scan-bed',
     name: 'Gescand, met bedkast',
-    note: 'Uitgeklapt raakt het bed drumstel en fauteuil',
+    note: 'De slaapfauteuil gaat eruit; uitgeklapt raakt het bed het drumstel',
     items: scannedLayout.map((item) => (item.id === withBed.id ? withBed : item)),
-  },
-  {
-    id: 'reading-chair',
-    name: 'Leesstoel blijft',
-    note: 'Het drumstel staat voor de bedkast en gaat opzij voor een logé',
-    items: [
-      withBed,
-      { id: 'drum-kit', type: 'drumKit', x: -0.449, z: -1.235, rotation: 90, makesWayForGuests: true },
-      { id: 'drum-amp', type: 'drumAmp', x: -0.3, z: 1.97, rotation: 180 },
-      { id: 'desk', type: 'desk', x: 1.092, z: -1.27, rotation: -90 },
-      { id: 'office-chair', type: 'officeChair', x: 0.62, z: -1.27, rotation: 90 },
-      { id: 'archive-cabinet', type: 'archiveCabinet', x: 0.862, z: 0.645, rotation: -90 },
-      { id: 'armchair', type: 'armchair', x: 0.882, z: 1.455, rotation: -90 },
-      { id: 'floor-lamp', type: 'floorLamp', x: 0.15, z: 1.95, rotation: 0 },
-      { id: 'drawer-cabinet', type: 'drawerCabinet', x: -0.599, z: 0.725, rotation: 90 },
-      { id: 'storage-bin', type: 'storageBin', x: -1.235, z: 0.91, rotation: 90 },
-      { id: 'rug', type: 'rug', x: 0.2, z: -0.2, rotation: 0 },
-      { id: 'doormat', type: 'doormat', x: -0.85, z: 1.42, rotation: 0 },
-      left('wooden-chair', 'woodenChair'),
-      left('side-table', 'sideTable'),
-      left('canvas-table', 'canvasTable'),
-      left('folded-easel', 'foldedEasel'),
-    ],
   },
   {
     id: 'music-corner',
     name: 'Vaste muziekhoek',
-    note: 'Zonder fauteuil; het bed kan altijd open',
+    note: 'Zonder tafeltje met doeken; het bed kan altijd open',
     items: [
       withBed,
       { id: 'drum-kit', type: 'drumKit', x: 0.892, z: 1.175, rotation: -90 },
@@ -75,7 +52,6 @@ export const arrangements = [
       { id: 'storage-bin', type: 'storageBin', x: -1.235, z: 0.91, rotation: 90 },
       { id: 'rug', type: 'rug', x: 0.1, z: -0.3, rotation: 0 },
       { id: 'doormat', type: 'doormat', x: -0.85, z: 1.42, rotation: 0 },
-      left('armchair', 'armchair'),
       left('side-table', 'sideTable'),
       left('canvas-table', 'canvasTable'),
       left('folded-easel', 'foldedEasel'),
@@ -105,11 +81,18 @@ export function chooseArrangement(id) {
   }
 }
 
+export function oneSleepingPlace(items) {
+  const bedInside = items.some((item) => item.variant === 'bed')
+  return items.map((item) => (catalog[item.type].sleeps ? { ...item, removed: bedInside } : item))
+}
+
 export function arrangementItems(arrangement = chosenArrangement()) {
-  return scannedLayout.map((scanned) => {
-    const planned = arrangement.items.find((item) => item.id === scanned.id)
-    return planned ? { ...planned } : { ...scanned, removed: true }
-  })
+  return oneSleepingPlace(
+    scannedLayout.map((scanned) => {
+      const planned = arrangement.items.find((item) => item.id === scanned.id)
+      return planned ? { ...planned } : { ...scanned, removed: true }
+    }),
+  )
 }
 
 export function loadLayout() {
@@ -124,7 +107,7 @@ export function loadLayout() {
 
 export function saveLayout(items) {
   const moved = {}
-  for (const { id, x, z, rotation, variant, bedOpen } of items) moved[id] = { x, z, rotation, ...(variant && { variant, bedOpen: Boolean(bedOpen) }) }
+  for (const { id, x, z, rotation, variant, bedOpen, removed } of items) moved[id] = { x, z, rotation, removed: Boolean(removed), ...(variant && { variant, bedOpen: Boolean(bedOpen) }) }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(moved))
   } catch {

@@ -8,7 +8,8 @@ function cushion(material, size, [x, y, z], [tiltX, turnY, rollZ]) {
 }
 
 export const armchair = {
-  name: 'Fauteuil met plaid',
+  name: 'Slaapfauteuil met plaid',
+  sleeps: true,
   size: [0.95, 0.9, 1.02],
   build(m) {
     const [width, height, depth] = this.size
