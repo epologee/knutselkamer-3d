@@ -23,6 +23,7 @@
       button:hover { background: #ffffff33; }
       button:focus-visible { outline: 2px solid #ff9d4d; outline-offset: 2px; }
       #reset { position: fixed; right: 16px; top: calc(16px + env(safe-area-inset-top)); background: #141414b8; }
+      #frames { position: fixed; left: 12px; bottom: calc(10px + env(safe-area-inset-bottom)); font-size: 11px; color: #ffffff73; font-variant-numeric: tabular-nums; pointer-events: none; }
       @media (max-width: 560px) { #hint { top: auto; bottom: calc(92px + env(safe-area-inset-bottom)); } }
       @media (prefers-reduced-motion: reduce) { #loader div { animation: none; width: 100%; } }
     </style>
@@ -31,6 +32,7 @@
     <canvas id="scene" aria-label="De knutselkamer in 3D. Sleep om te draaien, scroll of knijp om te zoomen, klik op een meubel om het te verplaatsen."></canvas>
     <div id="loader"><div></div></div>
     <div id="hint" class="pill" role="status"></div>
+    <div id="frames" aria-hidden="true"></div>
     <button id="reset" type="button" hidden>Zet alles terug</button>
     <div id="selection" class="pill" hidden>
       <div>

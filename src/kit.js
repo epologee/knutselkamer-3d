@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 
 export function seededRandom(seed) {
   let state = seed >>> 0
@@ -103,4 +104,36 @@ export function instancedBoxes(items, material) {
   mesh.instanceMatrix.needsUpdate = true
   mesh.instanceColor.needsUpdate = true
   return shadowed(mesh)
+}
+
+export function consolidate(root, { keepOrigin = false } = {}) {
+  root.updateMatrixWorld(true)
+  const toRoot = keepOrigin ? root.matrixWorld.clone().invert() : new THREE.Matrix4()
+  const batches = new Map()
+  root.traverse((child) => {
+    const plain = child.isMesh && !child.isInstancedMesh && !Array.isArray(child.material) && !child.userData.picture
+    if (!plain || !child.geometry.attributes.uv || !child.geometry.attributes.normal) return
+    const key = `${child.material.uuid}|${child.castShadow}|${child.receiveShadow}`
+    if (!batches.has(key)) batches.set(key, { material: child.material, castShadow: child.castShadow, receiveShadow: child.receiveShadow, meshes: [] })
+    batches.get(key).meshes.push(child)
+  })
+  for (const batch of batches.values()) {
+    if (batch.meshes.length < 2) continue
+    const geometries = batch.meshes.map((mesh) => {
+      const source = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone()
+      const geometry = new THREE.BufferGeometry()
+      for (const name of ['position', 'normal', 'uv']) geometry.setAttribute(name, source.attributes[name])
+      geometry.applyMatrix4(new THREE.Matrix4().multiplyMatrices(toRoot, mesh.matrixWorld))
+      return geometry
+    })
+    const merged = new THREE.Mesh(mergeGeometries(geometries), batch.material)
+    merged.castShadow = batch.castShadow
+    merged.receiveShadow = batch.receiveShadow
+    for (const mesh of batch.meshes) {
+      mesh.removeFromParent()
+      mesh.geometry.dispose()
+    }
+    root.add(merged)
+  }
+  return root
 }

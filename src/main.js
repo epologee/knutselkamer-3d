@@ -6,6 +6,7 @@ import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { enableRearranging } from './interaction.js'
+import { consolidate } from './kit.js'
 import { catalog, loadLayout } from './layout.js'
 import { createMaterials } from './materials.js'
 import { ROOM, buildRoom, windowLightPlacement } from './room.js'
@@ -16,6 +17,7 @@ const query = new URLSearchParams(location.search)
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
+renderer.info.autoReset = false
 renderer.toneMapping = THREE.NeutralToneMapping
 renderer.toneMappingExposure = Number(query.get('exposure') ?? 1.15)
 renderer.shadowMap.enabled = true
@@ -70,7 +72,7 @@ function addLights() {
 function addFurniture(materials) {
   return loadLayout().map((item) => {
     const spec = catalog[item.type]
-    const object = spec.build(materials)
+    const object = consolidate(spec.build(materials))
     object.position.set(item.x, 0, item.z)
     object.rotation.y = THREE.MathUtils.degToRad(item.rotation)
     scene.add(object)
@@ -86,6 +88,7 @@ async function start() {
   })
   const materials = createMaterials()
   const room = buildRoom(materials, pictures)
+  for (const wall of room.walls) consolidate(wall.group, { keepOrigin: true })
   scene.add(room.root)
   addLights()
   const pieces = addFurniture(materials)
@@ -102,8 +105,22 @@ async function start() {
   const scratch = new THREE.WebGLRenderTarget(16, 16)
   let shadowsStale = true
   let frameStale = true
+  const fullDetail = renderer.getPixelRatio()
+  let sharpenAt = 0
+  function setDetail(ratio) {
+    if (renderer.getPixelRatio() === ratio) return
+    renderer.setPixelRatio(ratio)
+    composer.setPixelRatio(ratio)
+  }
+  function whileMoving() {
+    setDetail(Math.min(fullDetail, 1))
+    sharpenAt = performance.now() + 180
+  }
   const invalidate = () => (frameStale = true)
-  const invalidateShadows = () => (shadowsStale = frameStale = true)
+  const invalidateShadows = () => {
+    shadowsStale = frameStale = true
+    whileMoving()
+  }
 
   function refreshShadows() {
     room.withEverythingVisible(() => {
@@ -150,6 +167,7 @@ async function start() {
   }
   controls.addEventListener('change', () => {
     invalidate()
+    whileMoving()
     clearTimeout(viewSettled)
     viewSettled = setTimeout(keepViewInAddress, 400)
   })
@@ -161,12 +179,33 @@ async function start() {
   bakeRoomLight()
   await renderer.compileAsync(scene, camera)
 
+  const meter = document.querySelector('#frames')
+  const recentFrames = []
+  let previousFrameAt = 0
+  function showFrameRate(drawCalls) {
+    const now = performance.now()
+    if (now - previousFrameAt < 100) recentFrames.push(now - previousFrameAt)
+    else recentFrames.length = 0
+    if (recentFrames.length > 30) recentFrames.shift()
+    previousFrameAt = now
+    if (recentFrames.length < 5) return
+    const average = recentFrames.reduce((sum, value) => sum + value, 0) / recentFrames.length
+    meter.textContent = `${Math.round(1000 / average)} fps · ${drawCalls} draw calls`
+  }
+
   renderer.setAnimationLoop(() => {
     controls.update()
+    if (sharpenAt && performance.now() > sharpenAt) {
+      sharpenAt = 0
+      setDetail(fullDetail)
+      invalidate()
+    }
     if (room.cutAway(camera)) invalidate()
     if (!frameStale) return
     if (shadowsStale) refreshShadows()
+    renderer.info.reset()
     composer.render()
+    showFrameRate(renderer.info.render.calls)
     frameStale = false
     document.body.dataset.rendered = 'true'
   })
