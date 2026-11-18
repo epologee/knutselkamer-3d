@@ -14,8 +14,6 @@ Met "Rondlopen" sta je in de kamer op ooghoogte, met alle wanden en het plafond 
 
 Zodra de scene geladen is, begint het overzicht rond te draaien, met vier seconden geleidelijke versnelling naar maximaal één rondje per 90 seconden. Indrukken, klikken, aanraken, slepen, scrollen of toetsen stoppen de automatische rotatie en beginnen een nieuwe wachttijd van 7 seconden. Losse muisbewegingen en focus- of tabwissels tellen niet mee. Tijdens rondlopen, vasthouden of verslepen en met de systeemvoorkeur voor minder beweging blijft de automatische rotatie uit. De browser kan het tekenen van een verborgen tabblad pauzeren; terugkeren voegt geen nieuwe wachttijd toe. Automatische rotatie overschrijft het bewaarde camerastandpunt niet.
 
-[Onderzoek naar interacties in een andere 3D-kamer](office-interactions.md) beschrijft mogelijke verdere toevoegingen en hun bron.
-
 Zonder Caddy: `npm install` en `npm run dev`.
 
 ## Opbouw
