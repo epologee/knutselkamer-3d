@@ -13,7 +13,7 @@ try {
   await page.goto(process.argv[2] ?? 'http://127.0.0.1:3169')
   await page.waitForSelector('body.ready', { timeout: 60000 })
   await page.waitForFunction(() => globalThis.inspectedView)
-  await page.clock.pauseAt(new Date())
+  await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 50)
   const view = () => page.evaluate(() => ({ rotating: inspectedView.controls.autoRotate, speed: inspectedView.controls.autoRotateSpeed, angle: inspectedView.controls.getAzimuthalAngle() }))
   await page.clock.runFor(100)
   assert.equal((await view()).rotating, true, 'ease-in must begin as soon as the scene is ready')
