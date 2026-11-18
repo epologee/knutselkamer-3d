@@ -37,6 +37,25 @@ try {
   await page.clock.runFor(1000)
   const afterSecond = await view()
   assert(Math.abs(Math.abs(afterSecond.angle - atSpeed.angle) - Math.PI / 45) < 0.003, 'the actual camera must turn four degrees per second at maximum speed')
+  await page.evaluate(() => dispatchEvent(new Event('blur')))
+  assert.equal((await view()).rotating, true, 'losing focus must not stop rotation')
+  await page.clock.runFor(1000)
+  const unfocused = await view()
+  assert.notEqual(unfocused.angle, afterSecond.angle, 'the camera must keep moving without focus')
+  await page.evaluate(() => dispatchEvent(new Event('focus')))
+  assert.equal((await view()).speed, afterSecond.speed, 'regaining focus must not restart ease-in')
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true })
+    document.dispatchEvent(new Event('visibilitychange'))
+  })
+  await page.clock.fastForward(12000)
+  await page.evaluate(() => {
+    delete document.hidden
+    document.dispatchEvent(new Event('visibilitychange'))
+    dispatchEvent(new Event('focus'))
+  })
+  assert.equal((await view()).rotating, true, 'returning from a hidden tab must not add an idle pause')
+  assert.equal((await view()).speed, afterSecond.speed, 'returning from a hidden tab must retain cruising speed')
   await page.mouse.move(80, 50)
   assert.equal((await view()).rotating, true, 'hovering must not stop rotation')
   assert.equal((await view()).speed, afterSecond.speed, 'hovering must not restart ease-in')
@@ -73,7 +92,7 @@ try {
   assert.equal((await view()).rotating, false, 'returning to overview must restart the full wait')
   await page.clock.fastForward(300)
   assert.equal((await view()).rotating, true, 'overview rotation must resume normally')
-  console.log('PASS immediate ease-in, hover ignored, seven-second interaction delay, ninety-second revolution, presses, drags, scrolls, keys, reduced motion and walking')
+  console.log('PASS immediate ease-in, hover ignored, focus and visibility retained, seven-second interaction delay, ninety-second revolution, presses, drags, scrolls, keys, reduced motion and walking')
 } finally {
   await browser.close()
 }

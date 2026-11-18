@@ -31,14 +31,12 @@ export function enableIdleRotation(controls, isPaused) {
     keys.delete(event.code)
     restart()
   }, true)
-  function reset() {
+  function releaseInputs() {
     pointers.clear()
     keys.clear()
-    restart()
   }
-  addEventListener('blur', reset)
-  addEventListener('focus', reset)
-  document.addEventListener('visibilitychange', reset)
+  addEventListener('blur', releaseInputs)
+  document.addEventListener('visibilitychange', releaseInputs)
   reducedMotion.addEventListener('change', restart)
   controls.addEventListener('start', restart)
   controls.addEventListener('end', restart)
@@ -46,7 +44,7 @@ export function enableIdleRotation(controls, isPaused) {
   controls.autoRotateSpeed = 0
 
   return () => {
-    if (document.hidden || reducedMotion.matches || pointers.size || keys.size || !controls.enabled || isPaused()) {
+    if (reducedMotion.matches || pointers.size || keys.size || !controls.enabled || isPaused()) {
       restart()
       return
     }

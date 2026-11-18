@@ -12,7 +12,7 @@ Selecteer de vakkenkast om er een bedkast in te bouwen: een horizontaal opklapbe
 
 Met "Rondlopen" sta je in de kamer op ooghoogte, met alle wanden en het plafond in beeld. Sleep om rond te kijken, loop met WASD of de pijltjes (op een aanraakscherm met de stick linksonder) en ga terug met Escape of de knop. Meubels en wanden houden je tegen. Het standpunt staat in de URL (`?walk=x,z,draaiing`).
 
-Zodra de scene geladen is, begint het overzicht rond te draaien, met vier seconden geleidelijke versnelling naar maximaal één rondje per 90 seconden. Indrukken, klikken, aanraken, slepen, scrollen of toetsen stoppen de automatische rotatie en beginnen een nieuwe wachttijd van 7 seconden. Losse muisbewegingen tellen niet mee. Tijdens rondlopen, vasthouden of verslepen en met de systeemvoorkeur voor minder beweging blijft de automatische rotatie uit. Terugkeren naar het tabblad begint met een nieuwe wachttijd. Automatische rotatie overschrijft het bewaarde camerastandpunt niet.
+Zodra de scene geladen is, begint het overzicht rond te draaien, met vier seconden geleidelijke versnelling naar maximaal één rondje per 90 seconden. Indrukken, klikken, aanraken, slepen, scrollen of toetsen stoppen de automatische rotatie en beginnen een nieuwe wachttijd van 7 seconden. Losse muisbewegingen en focus- of tabwissels tellen niet mee. Tijdens rondlopen, vasthouden of verslepen en met de systeemvoorkeur voor minder beweging blijft de automatische rotatie uit. De browser kan het tekenen van een verborgen tabblad pauzeren; terugkeren voegt geen nieuwe wachttijd toe. Automatische rotatie overschrijft het bewaarde camerastandpunt niet.
 
 [Onderzoek naar interacties in een andere 3D-kamer](office-interactions.md) beschrijft mogelijke verdere toevoegingen en hun bron.
 
