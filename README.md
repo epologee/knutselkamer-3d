@@ -21,7 +21,7 @@ Zonder Caddy: `npm install` en `npm run dev`.
 
 Het assenstelsel is in meters, +Y omhoog, oorsprong op de vloer in het midden van de kamer. De raamwand staat op -Z, de deurwand op -X.
 
-Lichtinstellingen zijn te proberen via de URL: `exposure`, `sun`, `sky`, `window` en `bounce`.
+Lichtinstellingen zijn te proberen via de URL: `exposure`, `sun`, `sky`, `window` en `bounce`. De ambient occlusion en kantafvlakking zijn op dezelfde manier bij te stellen: `aoSamples`, `aoDenoise`, `aoScale`, `msaa` (gewone schermen) en `msaaRetina` (pixelverhouding 2 en hoger, standaard 0). Op een retina-scherm zijn de pixels zo klein dat kantafvlakking nauwelijks zichtbaar is, terwijl hij een derde van de rendertijd kostte.
 
 ## Van scan naar scene
 
@@ -44,6 +44,7 @@ Met de site draaiend:
 - `node tools/check-live-reload.js https://knutselkamer.test/` controleert dat een bronwijziging de pagina herlaadt met behoud van het standpunt.
 - `node tools/check-slow-textures.js https://knutselkamer.test/ beeld.png` vertraagt de fototexturen en controleert dat het eerste beeld erop wacht.
 - `node tools/measure-frames.js https://knutselkamer.test/ 2` draait de kamer rond op retina-resolutie en meldt de tijd tussen beelden en het aantal tekenopdrachten.
+- `node tools/benchmark-render.js https://knutselkamer.test/ "<query>" <map>` meet de rendertijd per beeld op pixelverhouding 1 en 2 en legt vier vaste standpunten vast voor een beeldvergelijking.
 - `node tools/find-coplanar.js https://knutselkamer.test/` zoekt vlakken met verschillend materiaal die in hetzelfde vlak liggen en elkaar overlappen. Zulke paren flikkeren in beeld.
 
 ## Publiceren

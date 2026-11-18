@@ -95,12 +95,15 @@ async function start() {
   addLights()
   const pieces = addFurniture(materials)
 
-  const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 }))
+  const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: Number(query.get('msaa') ?? 4) }))
   composer.addPass(new RenderPass(scene, camera))
   const occlusion = new GTAOPass(scene, camera, 1, 1)
   occlusion.blendIntensity = 0.85
-  occlusion.updateGtaoMaterial({ radius: 0.45, distanceExponent: 1.6, thickness: 1.2, scale: 1.1, samples: 16 })
-  occlusion.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 16 })
+  occlusion.updateGtaoMaterial({ radius: 0.45, distanceExponent: 1.6, thickness: 1.2, scale: 1.1, samples: Number(query.get('aoSamples') ?? 16) })
+  occlusion.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: Number(query.get('aoDenoise') ?? 16) })
+  const occlusionScale = Number(query.get('aoScale') ?? 1)
+  const resizeOcclusion = occlusion.setSize.bind(occlusion)
+  occlusion.setSize = (width, height) => resizeOcclusion(Math.ceil(width * occlusionScale), Math.ceil(height * occlusionScale))
   if (!query.has('flat')) composer.addPass(occlusion)
   composer.addPass(new OutputPass())
 
@@ -108,10 +111,24 @@ async function start() {
   let shadowsStale = true
   let frameStale = true
   const fullDetail = renderer.getPixelRatio()
+  queueMicrotask(() => {
+    const ratio = renderer.getPixelRatio()
+    renderer.setPixelRatio(ratio === 1 ? 2 : 1)
+    setDetail(ratio)
+  })
   let sharpenAt = 0
+  const retinaSamples = Number(query.get('msaaRetina') ?? 0)
+  const plainSamples = Number(query.get('msaa') ?? 4)
   function setDetail(ratio) {
     if (renderer.getPixelRatio() === ratio) return
     renderer.setPixelRatio(ratio)
+    const samples = ratio >= 2 ? retinaSamples : plainSamples
+    for (const target of [composer.renderTarget1, composer.renderTarget2]) {
+      if (target.samples !== samples) {
+        target.samples = samples
+        target.dispose()
+      }
+    }
     composer.setPixelRatio(ratio)
   }
   function whileMoving() {
@@ -209,6 +226,31 @@ async function start() {
     if (recentFrames.length < 5) return
     const average = recentFrames.reduce((sum, value) => sum + value, 0) / recentFrames.length
     meter.textContent = `${Math.round(1000 / average)} fps · ${drawCalls} draw calls`
+  }
+
+  canvas.measureFrames = (frames, ratio) => {
+    setDetail(ratio)
+    sharpenAt = 0
+    const gl = renderer.getContext()
+    const pixel = new Uint8Array(4)
+    const home = camera.position.clone()
+    const upright = new THREE.Vector3(0, 1, 0)
+    const drawFrame = (turn) => {
+      camera.position.copy(home).sub(controls.target).applyAxisAngle(upright, turn).add(controls.target)
+      camera.lookAt(controls.target)
+      room.cutAway(camera, false)
+      composer.render()
+      gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel)
+    }
+    drawFrame(0)
+    const began = performance.now()
+    for (let frame = 1; frame <= frames; frame++) drawFrame(frame * 0.01)
+    const milliseconds = (performance.now() - began) / frames
+    camera.position.copy(home)
+    camera.lookAt(controls.target)
+    setDetail(fullDetail)
+    invalidate()
+    return milliseconds
   }
 
   const clock = new THREE.Timer()
