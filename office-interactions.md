@@ -36,6 +36,6 @@ De entry-module biedt rondlopen met botsingen, WASD/pijltjes, sneller lopen met 
 
 ## Toepassing in de knutselkamer
 
-De automatische rotatie is toegevoegd met een andere startregel dan die van de bron: 1 seconde na het laden of 7 seconden na de laatste interactie, met vier seconden ease-in naar maximaal één omwenteling per 60 seconden. Ze stopt bij nieuwe invoer, blijft uit tijdens rondlopen of vasthouden en respecteert minder beweging. De browsertest controleert dit gedrag en de bestaande verplaatsroute blijft werken.
+De automatische rotatie begint zodra de scene geladen is of 7 seconden na de laatste interactie, met vier seconden ease-in naar maximaal één omwenteling per 90 seconden. Indrukken, klikken, slepen, scrollen en toetsen tellen mee; losse muisbewegingen niet. De rotatie blijft uit tijdens rondlopen of vasthouden en respecteert minder beweging. De browsertest controleert dit gedrag en de bestaande verplaatsroute blijft werken.
 
 Voor verdere toevoegingen zijn een afzonderlijk schakelbare bureaulamp, wisselende monitorschermen en het openen van de kastdeur het meest direct te koppelen aan de aanwezige objecten. Voor belichting volgens de klok is eigen logica nodig; de bron biedt twee vaste sferen op basis van dark mode. Een volgende stap kan ochtend-, dag- en avondlicht zijn, maar daarvoor is hier nog geen werking gebouwd of vastgesteld.

@@ -1,13 +1,12 @@
 const IDLE_DELAY = 7000
-const INITIAL_DELAY = 1000
 const EASE_IN = 4000
-const CRUISING_SPEED = 1
+const CRUISING_SPEED = 2 / 3
 
 export function enableIdleRotation(controls, isPaused) {
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)')
   const pointers = new Set()
   const keys = new Set()
-  let rotateAt = performance.now() + INITIAL_DELAY
+  let rotateAt = performance.now()
 
   function restart() {
     rotateAt = performance.now() + IDLE_DELAY
@@ -15,7 +14,7 @@ export function enableIdleRotation(controls, isPaused) {
     controls.autoRotateSpeed = 0
   }
 
-  for (const type of ['pointermove', 'wheel', 'click']) document.addEventListener(type, restart, { capture: true, passive: true })
+  for (const type of ['wheel', 'click']) document.addEventListener(type, restart, { capture: true, passive: true })
   document.addEventListener('pointerdown', (event) => {
     pointers.add(event.pointerId)
     restart()
