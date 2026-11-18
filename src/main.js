@@ -211,8 +211,9 @@ async function start() {
     meter.textContent = `${Math.round(1000 / average)} fps · ${drawCalls} draw calls`
   }
 
-  const clock = new THREE.Clock()
+  const clock = new THREE.Timer()
   renderer.setAnimationLoop(() => {
+    clock.update()
     const seconds = Math.min(clock.getDelta(), 0.1)
     if (walking.isActive()) walking.update(seconds)
     else controls.update()

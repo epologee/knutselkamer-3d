@@ -30,7 +30,7 @@ De ruwe scan staat in `scan/` en blijft buiten git (290 MB, met foto's uit de ka
 - `python3 -I tools/survey.py scan/Room walls` controleert dat de vier wanden uit de mesh op het stelsel liggen. Met `box` en `map` meet je een meubel op: omtrek, hoogte en een hoogtekaart van bovenaf.
 - `node tools/export-layout.js > reference/layout.json` en daarna `python3 -I tools/measure.py scan/Room reference/layout.json reference/measure` tekenen de gemodelleerde grondvlakken over de mesh, per hoogteband. Elk grondvlak hoort op zijn meubel te vallen.
 - `python3 -I tools/mosaic.py scan/Room reference/mosaic` bakt per wand en voor de vloer een rechtgetrokken fotomozaïek op 240 px per meter. Daaruit zijn deur, raam, schilderijen, kleed en mat afgelezen.
-- `python3 -I tools/bake_textures.py scan/Room public/baked` snijdt elk schilderij, de ordnerrij, het prikbord op de kastdeur en het uitzicht uit de best passende scanfoto. De regio's staan bovenin dat bestand.
+- `python3 -I tools/bake_textures.py scan/Room public/baked` trekt elk schilderij recht op zijn eigen vier hoeken, zodat de hoeken van de afbeelding op de hoeken van de lijst vallen. De hoeken staan per schilderij bovenin dat bestand in wandcoördinaten en zijn afgelezen op een uitsnede van de scanfoto met maatraster. Hetzelfde script snijdt de ordnerrij, het prikbord op de kastdeur en het uitzicht uit.
 
 Een meubel verplaatsen of toevoegen in `src/layout.js` begint dus bij een meting met `survey.py`, niet bij een schatting uit een foto.
 

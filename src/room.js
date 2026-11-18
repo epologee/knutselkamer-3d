@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { Reflector } from 'three/addons/objects/Reflector.js'
 import { box, rod } from './kit.js'
 import { photoTexture } from './textures.js'
 
@@ -178,6 +179,15 @@ function radiator(m) {
   return parts
 }
 
+function mirrorGlass(glass, width, height, frameDepth) {
+  const glassWidth = (glass.u[1] - glass.u[0]) * width
+  const glassHeight = (glass.v[1] - glass.v[0]) * height
+  const mirror = new Reflector(new THREE.PlaneGeometry(glassWidth, glassHeight), { textureWidth: 1024, textureHeight: 1024, color: '#787c80' })
+  mirror.position.set(((glass.u[0] + glass.u[1]) / 2 - 0.5) * width, ((glass.v[0] + glass.v[1]) / 2 - 0.5) * height, frameDepth / 2 + 0.002)
+  mirror.userData.picture = 'mirror-glass'
+  return mirror
+}
+
 function picture(entry, m) {
   const width = entry.u[1] - entry.u[0]
   const height = entry.v[1] - entry.v[0]
@@ -192,6 +202,7 @@ function picture(entry, m) {
   mesh.castShadow = true
   mesh.receiveShadow = true
   mesh.userData.picture = entry.name
+  if (entry.glass) mesh.add(mirrorGlass(entry.glass, width, height, edge.depth))
   return mesh
 }
 

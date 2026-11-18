@@ -14,6 +14,7 @@ import sys
 
 import numpy as np
 from PIL import Image, ImageFilter
+from skimage import transform
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -23,17 +24,20 @@ from roomframe import ROOM
 PX_PER_M = 900
 
 PICTURES = [
-    dict(name="pansies", wall="right", u=(0.2, 0.9), v=(1.89, 2.39)),
-    dict(name="harbour", wall="right", u=(0.93, 1.47), v=(1.9, 2.33)),
-    dict(name="bridge", wall="right", u=(0.245, 0.895), v=(1.115, 1.8)),
-    dict(name="mirror", wall="right", u=(1.035, 1.55), v=(1.2, 1.81)),
-    dict(name="print", wall="right", u=(1.59, 2.025), v=(1.675, 2.02)),
-    dict(name="family", wall="right", u=(1.61, 2.08), v=(1.26, 1.57)),
-    dict(name="apples", wall="right", u=(2.195, 3.035), v=(1.62, 2.175)),
-    dict(name="poppy", wall="right", u=(2.48, 2.84), v=(1.265, 1.535)),
-    dict(name="drawing", wall="window", u=(0.835, 1.33), v=(2.1, 2.43)),
-    dict(name="fields", wall="window", u=(1.65, 2.37), v=(2.11, 2.445)),
-    dict(name="class-photo", wall="back", u=(1.42, 2.045), v=(1.64, 2.19)),
+    dict(name="pansies", wall="right", photo="0155", corners=[(0.273, 2.394), (0.903, 2.391), (0.903, 1.911), (0.303, 1.911)]),
+    dict(name="harbour", wall="right", photo="0156", corners=[(0.944, 2.314), (1.472, 2.331), (1.461, 1.914), (0.963, 1.934)]),
+    dict(name="bridge", wall="right", photo="0153", corners=[(0.254, 1.797), (0.857, 1.793), (0.868, 1.131), (0.291, 1.127)]),
+    dict(
+        name="mirror", wall="right", photo="0156", corners=[(1.043, 1.804), (1.536, 1.804), (1.538, 1.233), (1.054, 1.213)],
+        glass=[(1.141, 1.724), (1.454, 1.727), (1.471, 1.311), (1.15, 1.304)],
+    ),
+    dict(name="print", wall="right", photo="0157", corners=[(1.583, 2.013), (2.010, 2.006), (2.016, 1.693), (1.586, 1.688)]),
+    dict(name="family", wall="right", photo="0152", corners=[(1.679, 1.559), (2.068, 1.574), (2.072, 1.306), (1.698, 1.281)]),
+    dict(name="apples", wall="right", photo="0151", corners=[(2.282, 2.172), (3.033, 2.191), (3.033, 1.650), (2.289, 1.639)]),
+    dict(name="poppy", wall="right", photo="0150", corners=[(2.488, 1.519), (2.832, 1.526), (2.830, 1.286), (2.499, 1.272)]),
+    dict(name="drawing", wall="window", photo="0002", corners=[(0.843, 2.427), (1.317, 2.416), (1.321, 2.102), (0.847, 2.111)]),
+    dict(name="fields", wall="window", photo="0153", corners=[(1.661, 2.441), (2.353, 2.426), (2.353, 2.117), (1.653, 2.122)]),
+    dict(name="class-photo", wall="back", photo="0197", corners=[(1.442, 2.150), (2.034, 2.148), (2.014, 1.663), (1.434, 1.652)]),
 ]
 
 BLUR_BEFORE_PUBLISHING = {"family": 9, "class-photo": 9, "cabinet-door-plus-x": 9, "cabinet-binders": 5}
@@ -92,6 +96,37 @@ def project(points, cam):
     return px, py, depth
 
 
+def straightened_picture(surface, picture, cam):
+    """The picture pulled straight onto its own four corners, plus where it hangs.
+
+    The corners are in wall coordinates, read off the scan photo in the order
+    top left, top right, bottom right, bottom left. The texture covers exactly
+    that quadrilateral, so its corners land on the corners of the geometry.
+    """
+    corners = np.array(picture["corners"], float)
+    width = (np.linalg.norm(corners[1] - corners[0]) + np.linalg.norm(corners[2] - corners[3])) / 2
+    height = (np.linalg.norm(corners[3] - corners[0]) + np.linalg.norm(corners[2] - corners[1])) / 2
+    unit_square = np.array([[0, 0], [1, 0], [1, 1], [0, 1]], float)
+    onto_wall = transform.ProjectiveTransform.from_estimate(unit_square, corners)
+    columns, rows = int(round(width * PX_PER_M)), int(round(height * PX_PER_M))
+    s, t = np.meshgrid((np.arange(columns) + 0.5) / columns, (np.arange(rows) + 0.5) / rows)
+    on_wall = onto_wall(np.stack([s.ravel(), t.ravel()], axis=1)).reshape(rows, columns, 2)
+    origin, u_axis, v_axis = (np.array(surface[k], float) for k in ("origin", "u", "v"))
+    points = origin + on_wall[..., :1] * u_axis + on_wall[..., 1:] * v_axis
+    centre = corners.mean(axis=0)
+    placement = dict(
+        u=[round(float(centre[0] - width / 2), 4), round(float(centre[0] + width / 2), 4)],
+        v=[round(float(centre[1] - height / 2), 4), round(float(centre[1] + height / 2), 4)],
+    )
+    if "glass" in picture:
+        inside = onto_wall.inverse(np.array(picture["glass"], float))
+        placement["glass"] = dict(
+            u=[round(float(inside[:, 0].min()), 4), round(float(inside[:, 0].max()), 4)],
+            v=[round(float(1 - inside[:, 1].max()), 4), round(float(1 - inside[:, 1].min()), 4)],
+        )
+    return sample(points, cam), placement
+
+
 def best_single_photo(points, normal, cams):
     centre = points.reshape(-1, 3).mean(axis=0)
     best, best_score = None, 0.0
@@ -130,14 +165,11 @@ if __name__ == "__main__":
     walls = surfaces()
     manifest = []
     for picture in PICTURES:
-        points, normal = region_points(walls[picture["wall"]], picture["u"], picture["v"])
-        cam = best_single_photo(points, normal, cams)
-        if cam is None:
-            print("no single photo covers", picture["name"])
-            continue
-        publishable(sample(points, cam), picture["name"]).save(os.path.join(out_dir, picture["name"] + ".jpg"), quality=90)
-        manifest.append(picture)
-        print(picture["name"], os.path.basename(cam["file"]))
+        cam = next(c for c in cams if os.path.basename(c["file"]) == picture["photo"] + ".jpg")
+        image, placement = straightened_picture(walls[picture["wall"]], picture, cam)
+        publishable(image, picture["name"]).save(os.path.join(out_dir, picture["name"] + ".jpg"), quality=90)
+        manifest.append(dict(name=picture["name"], wall=picture["wall"], **placement))
+        print(picture["name"], f"{(placement['u'][1] - placement['u'][0]) * 100:.1f} x {(placement['v'][1] - placement['v'][0]) * 100:.1f} cm")
     json.dump(manifest, open(os.path.join(out_dir, "pictures.json"), "w"), indent=1)
 
     for name, side in (("cabinet-door-plus-x", 1),):
