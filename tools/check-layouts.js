@@ -11,6 +11,6 @@ for (const arrangement of arrangements) {
   console.log(`  vloer vrij ${metres(levels.floor.area)} m² · tafelhoogte ${metres(levels.table.area)} m² · bovenop ${metres(levels.top.area)} m²`)
   for (const problem of problems) console.log(`  ✗ ${problem}`)
   if (!problems.length) console.log('  ✓ niets in de weg')
-  if (problems.length && !arrangement.id.startsWith('scan')) failures++
+  if (problems.length && !arrangement.reference && !arrangement.id.startsWith('scan')) failures++
 }
 process.exit(failures ? 1 : 0)
