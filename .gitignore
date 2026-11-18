@@ -1,0 +1,6 @@
+node_modules/
+dist/
+scan/
+__pycache__/
+.DS_Store
+reference/
