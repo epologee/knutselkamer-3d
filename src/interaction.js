@@ -17,7 +17,7 @@ function centimetres(metres) {
   return Math.round(metres * 100)
 }
 
-export function enableRearranging({ canvas, camera, controls, room, pieces, invalidate, invalidateShadows, bounds }) {
+export function enableRearranging({ canvas, camera, controls, room, pieces, invalidate, invalidateShadows, bounds, isPaused }) {
   const panel = document.querySelector('#selection')
   const title = document.querySelector('#selection-name')
   const measure = document.querySelector('#selection-size')
@@ -105,6 +105,7 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
   }
 
   canvas.addEventListener('pointerdown', (event) => {
+    if (isPaused()) return
     press = { x: event.clientX, y: event.clientY, time: performance.now() }
     const piece = pieceUnderPointer(event)
     if (!piece || piece !== selected) return
@@ -117,6 +118,7 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
   })
 
   canvas.addEventListener('pointermove', (event) => {
+    if (isPaused()) return
     if (!dragging) {
       if (event.pointerType === 'mouse' && !press) canvas.style.cursor = pieceUnderPointer(event) ? 'pointer' : ''
       return
@@ -130,6 +132,7 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
   })
 
   function release(event) {
+    if (isPaused()) return
     if (dragging) {
       dragging = false
       controls.enabled = true
@@ -159,6 +162,7 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
     invalidateShadows()
   })
   addEventListener('keydown', (event) => {
+    if (isPaused()) return
     if (event.key === 'r' || event.key === 'R') rotateSelected()
     if (event.key === 'Escape') select(null)
   })
@@ -167,4 +171,6 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
   hint.textContent = 'Sleep om rond te kijken. Klik op een meubel om het te verplaatsen.'
   hint.classList.add('shown')
   setTimeout(() => hint.classList.remove('shown'), 9000)
+
+  return { deselect: () => select(null) }
 }

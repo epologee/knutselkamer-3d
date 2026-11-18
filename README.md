@@ -6,6 +6,8 @@ Een kamer van 278 bij 427 cm, nagebouwd als three.js-scene op basis van een iPho
 
 `https://knutselkamer.test` start de Vite dev-server via de gedeelde Caddy. De pagina herlaadt zelf bij elke wijziging in de broncode en na een herstart van de server. Het camerastandpunt staat in de URL (`?camera=x,y,z`), dus een herlaad laat het beeld staan. Verplaatste meubels blijven per browser bewaard; "Zet alles terug" herstelt de indeling uit de scan.
 
+Met "Rondlopen" sta je in de kamer op ooghoogte, met alle wanden en het plafond in beeld. Sleep om rond te kijken, loop met WASD of de pijltjes (op een aanraakscherm met de stick linksonder) en ga terug met Escape of de knop. Meubels en wanden houden je tegen. Het standpunt staat in de URL (`?walk=x,z,draaiing`).
+
 Zonder Caddy: `npm install` en `npm run dev`.
 
 ## Opbouw
@@ -14,6 +16,7 @@ Zonder Caddy: `npm install` en `npm run dev`.
 - `src/furniture/`: één object per meubel met `name`, `size` (breedte, hoogte, diepte in meters) en `build(materials)`. De oorsprong ligt op de vloer in het midden van het grondvlak, de voorkant wijst naar lokaal +Z.
 - `src/layout.js`: de catalogus van meubeltypen en `scannedLayout`, de plek en draaiing van elk meubel zoals de scan het aantrof. Een nieuw meubel is een nieuw object in `src/furniture/` plus een regel hier.
 - `src/interaction.js`: selecteren, verslepen binnen de kamer en draaien.
+- `src/walking.js`: rondlopen in de kamer, met botsing tegen wanden en de grondvlakken van de meubels.
 - `src/main.js`: renderer, licht, ambient occlusion en de lichtprobe van de kamer zelf.
 
 Het assenstelsel is in meters, +Y omhoog, oorsprong op de vloer in het midden van de kamer. De raamwand staat op -Z, de deurwand op -X.
@@ -37,6 +40,7 @@ Met de site draaiend:
 
 - `node tools/screenshot.js https://knutselkamer.test/ beeld.png` maakt een render in headless Chromium.
 - `node tools/check-rearranging.js https://knutselkamer.test/ reference/rearrange` doorloopt selecteren, verslepen, draaien, herladen en terugzetten.
+- `node tools/check-walking.js https://knutselkamer.test/ reference/walk` loopt de kamer in, tegen een meubel aan, kijkt om en gaat terug naar het overzicht.
 - `node tools/check-live-reload.js https://knutselkamer.test/` controleert dat een bronwijziging de pagina herlaadt met behoud van het standpunt.
 - `node tools/check-slow-textures.js https://knutselkamer.test/ beeld.png` vertraagt de fototexturen en controleert dat het eerste beeld erop wacht.
 - `node tools/measure-frames.js https://knutselkamer.test/ 2` draait de kamer rond op retina-resolutie en meldt de tijd tussen beelden en het aantal tekenopdrachten.

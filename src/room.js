@@ -225,14 +225,14 @@ export function buildRoom(m, pictures) {
   root.add(ceiling)
 
   const fromCamera = new THREE.Vector3()
-  function cutAway(camera) {
+  function cutAway(camera, fromInside = false) {
     let changed = false
     for (const wall of walls) {
-      const visible = fromCamera.copy(camera.position).sub(wall.middle).dot(wall.inward) > 0
+      const visible = fromInside || fromCamera.copy(camera.position).sub(wall.middle).dot(wall.inward) > 0
       if (wall.group.visible !== visible) changed = true
       wall.group.visible = visible
     }
-    const ceilingVisible = camera.position.y < ROOM.height
+    const ceilingVisible = fromInside || camera.position.y < ROOM.height
     if (ceiling.visible !== ceilingVisible) changed = true
     ceiling.visible = ceilingVisible
     return changed

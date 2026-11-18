@@ -10,6 +10,7 @@ import { consolidate } from './kit.js'
 import { catalog, loadLayout } from './layout.js'
 import { createMaterials } from './materials.js'
 import { ROOM, buildRoom, windowLightPlacement } from './room.js'
+import { enableWalking } from './walking.js'
 
 const canvas = document.querySelector('#scene')
 const loader = document.querySelector('#loader')
@@ -172,7 +173,23 @@ async function start() {
     clearTimeout(viewSettled)
     viewSettled = setTimeout(keepViewInAddress, 400)
   })
-  enableRearranging({ canvas, camera, controls, room, pieces, invalidate, invalidateShadows, bounds: ROOM })
+  let walking
+  const rearranging = enableRearranging({ canvas, camera, controls, room, pieces, invalidate, invalidateShadows, bounds: ROOM, isPaused: () => Boolean(walking?.isActive()) })
+  function keepStandpointInAddress() {
+    if (!walking.isActive()) return
+    const url = new URL(location.href)
+    url.searchParams.set('walk', walking.describe())
+    history.replaceState(null, '', url)
+  }
+  walking = enableWalking({
+    canvas, camera, controls, pieces, query, invalidate, bounds: ROOM,
+    onStart: () => rearranging.deselect(),
+    onMove: () => {
+      whileMoving()
+      clearTimeout(viewSettled)
+      viewSettled = setTimeout(keepStandpointInAddress, 400)
+    },
+  })
 
   await photosLoaded
   THREE.DefaultLoadingManager.onLoad = invalidate
@@ -194,14 +211,17 @@ async function start() {
     meter.textContent = `${Math.round(1000 / average)} fps · ${drawCalls} draw calls`
   }
 
+  const clock = new THREE.Clock()
   renderer.setAnimationLoop(() => {
-    controls.update()
+    const seconds = Math.min(clock.getDelta(), 0.1)
+    if (walking.isActive()) walking.update(seconds)
+    else controls.update()
     if (sharpenAt && performance.now() > sharpenAt) {
       sharpenAt = 0
       setDetail(fullDetail)
       invalidate()
     }
-    if (room.cutAway(camera)) invalidate()
+    if (room.cutAway(camera, walking.isActive())) invalidate()
     if (!frameStale) return
     if (shadowsStale) refreshShadows()
     renderer.info.reset()
