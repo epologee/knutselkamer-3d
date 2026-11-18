@@ -59,6 +59,38 @@ await page.waitForTimeout(400)
 expect(!(await page.isVisible('#facts-hidden')), 'bringing the piece back should empty the hidden list')
 expect(Math.abs((await freeFloor()) - before) < 0.0001, 'bringing the piece back should restore the free floor')
 
+async function selectByName(wanted) {
+  for (const [x, y] of [[860, 760], [840, 700], [880, 740], [820, 780], [900, 700], [800, 720]]) {
+    await page.keyboard.press('Escape')
+    await page.mouse.click(x, y)
+    await page.waitForTimeout(250)
+    if ((await page.isVisible('#selection')) && (await page.textContent('#selection-name')) === wanted) return true
+  }
+  return false
+}
+
+await page.reload()
+await page.waitForSelector('body[data-rendered]', { timeout: 30000 })
+await page.waitForTimeout(300)
+const found = await selectByName('Archiefkast met uittrekblad')
+expect(found, 'the archive cabinet should be selectable')
+if (found) {
+  expect((await page.textContent('#parts')) === 'Deuren verbergen', 'the archive cabinet should offer to hide its doors')
+  await page.click('#parts')
+  await page.waitForTimeout(400)
+  expect((await page.textContent('#parts')) === 'Deuren tonen', 'hidden doors should offer to come back')
+  const withoutDoors = (await copied()).items.find((item) => item.id === 'archive-cabinet')
+  expect(withoutDoors.withoutParts?.includes('doors'), `the copied layout should drop the doors, got ${JSON.stringify(withoutDoors)}`)
+  await page.screenshot({ path: `${outputPrefix}-doors.png` })
+  await page.reload()
+  await page.waitForSelector('body[data-rendered]', { timeout: 30000 })
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('knutselkamer-layout-v2'))['archive-cabinet'])
+  expect(saved.withoutParts?.includes('doors'), 'hidden doors should survive a reload')
+  await page.click('#reset')
+  await page.waitForTimeout(400)
+  expect(!(await copied()).items.find((item) => item.id === 'archive-cabinet').withoutParts, 'reset should bring the doors back')
+}
+
 await browser.close()
 for (const failure of failures) console.log(`FAIL ${failure}`)
 console.log(failures.length ? `${failures.length} failed` : 'hiding works')

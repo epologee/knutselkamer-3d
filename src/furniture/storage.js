@@ -279,7 +279,8 @@ export const archiveCabinet = {
     { level: 'top', label: 'Archiefkast', x: -0.175, z: -0.53 + CABINET.depth / 2, w: CABINET.width, d: CABINET.depth, y: CABINET.height },
     { level: 'table', label: 'Uittrekblad archiefkast', x: -0.175, z: -0.53 + CABINET.depth + 0.11, w: 0.89, d: 0.5, y: CABINET.pullOut },
   ],
-  build(m) {
+  removableParts: { doors: 'Deuren' },
+  build(m, item = {}) {
     const { width, depth, height, panel } = CABINET
     const back = -this.size[2] / 2
     const front = back + depth
@@ -297,11 +298,14 @@ export const archiveCabinet = {
       shelf(CABINET.printerShelf),
       shelf(CABINET.lowerShelf),
       box([0.89, 0.02, 0.5], [0, CABINET.pullOut - 0.02, front + 0.11], m.mint),
-      openDoor(m, { side: -1, splay: 0.09, inside: pinnedPhotoDoor(m) }),
-      openDoor(m, { side: 1, splay: 0.9, inside: pinnedNotesDoor(m) }),
     ]
-    parts.at(-2).position.set(-width / 2 + 0.01, 0, front)
-    parts.at(-1).position.set(width / 2 - 0.01, 0, front)
+    if (!item.withoutParts?.includes('doors')) {
+      const left = openDoor(m, { side: -1, splay: 0.09, inside: pinnedPhotoDoor(m) })
+      const right = openDoor(m, { side: 1, splay: 0.9, inside: pinnedNotesDoor(m) })
+      left.position.set(-width / 2 + 0.01, 0, front)
+      right.position.set(width / 2 - 0.01, 0, front)
+      parts.push(left, right)
+    }
 
     const binderRow = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.32, 0.28), [m.black, m.black, m.paper, m.black, baked('cabinet-binders', 0.6), m.black])
     binderRow.position.set(-0.05, CABINET.binderShelf + 0.16, front - 0.2)

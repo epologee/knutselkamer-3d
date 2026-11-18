@@ -27,6 +27,8 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
   const variantButton = document.querySelector('#variant')
   const foldButton = document.querySelector('#fold')
   const hideButton = document.querySelector('#hide')
+  const partsButton = document.querySelector('#parts')
+  const partsKey = (item) => (item.withoutParts ?? []).slice().sort().join(',')
   const resetButton = document.querySelector('#reset')
   const hint = document.querySelector('#hint')
 
@@ -83,9 +85,33 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
     const planned = arrangementItems()
     const moved = pieces.some(({ item }) => {
       const original = planned.find((entry) => entry.id === item.id)
-      return original.x !== item.x || original.z !== item.z || original.rotation !== item.rotation || original.variant !== item.variant || Boolean(original.bedOpen) !== Boolean(item.bedOpen) || Boolean(original.removed) !== Boolean(item.removed)
+      return original.x !== item.x || original.z !== item.z || original.rotation !== item.rotation || original.variant !== item.variant || Boolean(original.bedOpen) !== Boolean(item.bedOpen) || Boolean(original.removed) !== Boolean(item.removed) || partsKey(original) !== partsKey(item)
     })
     resetButton.hidden = !moved
+  }
+
+  function describeParts(piece) {
+    const [key, label] = Object.entries(piece?.spec.removableParts ?? {})[0] ?? []
+    partsButton.hidden = !key
+    if (!key) return
+    const without = piece.item.withoutParts?.includes(key)
+    partsButton.textContent = `${label} ${without ? 'tonen' : 'verbergen'}`
+  }
+
+  function toggleParts() {
+    const [key] = Object.keys(selected?.spec.removableParts ?? {})
+    if (!key) return
+    const piece = selected
+    const without = new Set(piece.item.withoutParts ?? [])
+    if (without.has(key)) without.delete(key)
+    else without.add(key)
+    piece.item.withoutParts = [...without]
+    if (!without.size) delete piece.item.withoutParts
+    rebuild(piece)
+    tag(piece)
+    record(piece)
+    select(piece)
+    invalidateShadows()
   }
 
   function describeBed(piece) {
@@ -144,6 +170,7 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
       hint.classList.remove('shown')
     }
     describeBed(piece)
+    describeParts(piece)
     invalidate()
   }
 
@@ -208,7 +235,7 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
     const planned = arrangementItems()
     for (const piece of pieces) {
       const original = planned.find((entry) => entry.id === piece.item.id)
-      const changedVariant = piece.item.variant !== original.variant || Boolean(piece.item.bedOpen) !== Boolean(original.bedOpen)
+      const changedVariant = piece.item.variant !== original.variant || Boolean(piece.item.bedOpen) !== Boolean(original.bedOpen) || partsKey(piece.item) !== partsKey(original)
       for (const key of Object.keys(piece.item)) delete piece.item[key]
       Object.assign(piece.item, original)
       piece.object.position.set(original.x, 0, original.z)
@@ -241,6 +268,7 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
   }
 
   hideButton.addEventListener('click', hideSelected)
+  partsButton.addEventListener('click', toggleParts)
   addEventListener('keydown', (event) => {
     if (isPaused()) return
     if (event.target.closest?.('input, textarea')) return
@@ -264,6 +292,7 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
       rotation: item.rotation,
       ...(item.variant && { variant: item.variant, bedOpen: Boolean(item.bedOpen) }),
       ...(item.removed && { removed: true }),
+      ...(item.withoutParts?.length && { withoutParts: item.withoutParts }),
     }))
     return JSON.stringify({ arrangement: chosenArrangement().id, items }, null, 2)
   }

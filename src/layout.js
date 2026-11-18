@@ -107,7 +107,7 @@ export function loadLayout() {
 
 export function saveLayout(items) {
   const moved = {}
-  for (const { id, x, z, rotation, variant, bedOpen, removed } of items) moved[id] = { x, z, rotation, removed: Boolean(removed), ...(variant && { variant, bedOpen: Boolean(bedOpen) }) }
+  for (const { id, x, z, rotation, variant, bedOpen, removed, withoutParts } of items) moved[id] = { x, z, rotation, removed: Boolean(removed), withoutParts: withoutParts ?? [], ...(variant && { variant, bedOpen: Boolean(bedOpen) }) }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(moved))
   } catch {

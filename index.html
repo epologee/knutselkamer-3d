@@ -31,7 +31,7 @@
       .walking #reset { display: none; }
       #frames { position: fixed; left: 12px; bottom: calc(10px + env(safe-area-inset-bottom)); font-size: 11px; color: #ffffff73; font-variant-numeric: tabular-nums; pointer-events: none; }
       #selection-note { color: #ffc48f; max-width: 34ch; }
-      #selection-note:empty, #variant[hidden], #fold[hidden] { display: none; }
+      #selection-note:empty, #variant[hidden], #fold[hidden], #parts[hidden] { display: none; }
       .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
       #facts { position: fixed; left: 16px; top: calc(16px + env(safe-area-inset-top)); width: 248px; max-width: calc(100% - 32px); box-sizing: border-box; border-radius: 16px; padding: 4px 4px 10px; background: #141414b8; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border: 1px solid #ffffff33; opacity: 0; pointer-events: none; transition: opacity 0.4s; }
       .ready #facts { opacity: 1; pointer-events: auto; }
@@ -112,6 +112,7 @@
         <button id="rotate" type="button">Kwartslag draaien</button>
         <button id="variant" type="button" hidden></button>
         <button id="fold" type="button" hidden></button>
+        <button id="parts" type="button" hidden></button>
         <button id="hide" type="button">Verbergen</button>
       </div>
     </div>
