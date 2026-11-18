@@ -48,6 +48,17 @@ if (arrangements.length > 1) {
   expect(Math.abs((await tableArea()) - scannedTable) < 0.0001, 'going back to the scan should restore its table area')
 }
 
+const chosenInAddress = () => new URL(page.url()).searchParams.get('indeling')
+expect(chosenInAddress() === arrangements[0].id, `the address should name the chosen layout, got ${chosenInAddress()}`)
+for (const arrangement of arrangements) {
+  const fresh = await browser.newPage({ viewport: { width: 1400, height: 900 } })
+  await fresh.goto(`${url}?indeling=${arrangement.id}`)
+  await fresh.waitForSelector('body[data-rendered]', { timeout: 30000 })
+  const shown = await fresh.locator('.arrangement[aria-pressed="true"] .level-name').textContent()
+  expect(shown === arrangement.name, `a link to "${arrangement.id}" should open "${arrangement.name}", got "${shown}"`)
+  await fresh.close()
+}
+
 await browser.close()
 for (const failure of failures) console.log(`FAIL ${failure}`)
 console.log(failures.length ? `${failures.length} failed` : 'arrangements work')

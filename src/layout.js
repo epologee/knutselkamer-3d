@@ -28,7 +28,7 @@ export const arrangements = [
   { id: 'scan', name: 'Zoals gescand', items: scannedLayout },
   {
     id: 'bed-right',
-    name: 'Bedkast rechts, drums bij het raam',
+    name: 'Bedkast tegenover deur',
     note: 'Kasten tegen de deurwand; drumstel en werktafel voor de radiator',
     reference: true,
     items: [
@@ -50,23 +50,43 @@ export const arrangements = [
 const STORAGE_KEY = 'knutselkamer-layout-v2'
 const ARRANGEMENT_KEY = 'knutselkamer-arrangement'
 
-export function chosenArrangement() {
-  let id = null
+const ADDRESS_KEY = 'indeling'
+
+function storedArrangementId() {
   try {
-    id = localStorage.getItem(ARRANGEMENT_KEY)
+    return localStorage.getItem(ARRANGEMENT_KEY)
   } catch {
-    id = null
+    return null
   }
-  return arrangements.find((arrangement) => arrangement.id === id) ?? arrangements[0]
+}
+
+function showArrangementInAddress(id) {
+  const url = new URL(location.href)
+  url.searchParams.set(ADDRESS_KEY, id)
+  history.replaceState(null, '', url)
+}
+
+const arrangementWithId = (id) => arrangements.find((arrangement) => arrangement.id === id)
+
+export function chosenArrangement() {
+  const requested = new URLSearchParams(location.search).get(ADDRESS_KEY)
+  return arrangementWithId(requested) ?? arrangementWithId(storedArrangementId()) ?? arrangements[0]
 }
 
 export function chooseArrangement(id) {
+  showArrangementInAddress(id)
   try {
     localStorage.setItem(ARRANGEMENT_KEY, id)
     localStorage.removeItem(STORAGE_KEY)
   } catch {
     return
   }
+}
+
+function followArrangementInAddress() {
+  const requested = new URLSearchParams(location.search).get(ADDRESS_KEY)
+  if (arrangementWithId(requested) && requested !== storedArrangementId()) chooseArrangement(requested)
+  else showArrangementInAddress(chosenArrangement().id)
 }
 
 export function oneSleepingPlace(items) {
@@ -84,6 +104,7 @@ export function arrangementItems(arrangement = chosenArrangement()) {
 }
 
 export function loadLayout() {
+  followArrangementInAddress()
   let saved = {}
   try {
     saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')

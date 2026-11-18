@@ -4,7 +4,7 @@ Een kamer van 278 bij 427 cm, nagebouwd als three.js-scene op basis van een iPho
 
 ## Bekijken
 
-`https://knutselkamer.test` start de Vite dev-server via de gedeelde Caddy. De pagina herlaadt zelf bij elke wijziging in de broncode en na een herstart van de server. Het camerastandpunt staat in de URL (`?camera=x,y,z`), dus een herlaad laat het beeld staan. Verplaatste meubels blijven per browser bewaard; "Zet indeling terug" herstelt de gekozen indeling.
+`https://knutselkamer.test` start de Vite dev-server via de gedeelde Caddy. De pagina herlaadt zelf bij elke wijziging in de broncode en na een herstart van de server. Het camerastandpunt staat in de URL (`?camera=x,y,z`), dus een herlaad laat het beeld staan. Verplaatste meubels blijven per browser bewaard; "Zet indeling terug" herstelt de gekozen indeling. De gekozen indeling staat ook in de URL (`?indeling=bed-right`), zodat een gedeelde link die indeling opent.
 
 Het paneel "Maten" linksboven toont de binnenmaten van de kamer, de indelingen waartussen je kiest en drie oppervlaktes: vrije vloer, tafelhoogte en bovenop de kasten. Klik op een oppervlakte om de getelde vlakken in de kamer te kleuren en de opbouw te zien. Een tafel telt op de vloer als bezet, ook als er ruimte onder is. "Kopieer indeling" zet de huidige indeling als JSON op het klembord, in dezelfde vorm als de indelingen in `src/layout.js`. Een geselecteerd meubel verdwijnt met "Verbergen" of de Delete-toets; het paneel toont dan een lijst "Verborgen" waaruit je het terugzet. De archiefkast kan daarnaast zijn deuren kwijt met "Deuren verbergen".
 
