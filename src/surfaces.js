@@ -16,11 +16,12 @@ function resolve(spec, value, item) {
 
 export function footprintOf(piece, item = piece.item) {
   const { spec } = piece
-  if (spec.flat) return []
+  if (spec.flat || item.removed) return []
   return resolve(spec, spec.footprint, item) ?? [{ x: 0, z: 0, w: spec.size[0], d: spec.size[2] }]
 }
 
 export function surfacesOf(piece) {
+  if (piece.item.removed) return []
   return resolve(piece.spec, piece.spec.surfaces, piece.item) ?? []
 }
 
@@ -41,7 +42,10 @@ export function covers(piece, shape, x, z, margin = 0) {
   if (shape.r) return Math.hypot(dx, dz) < shape.r + margin
   const localX = dx * Math.cos(centre.angle) - dz * Math.sin(centre.angle)
   const localZ = dx * Math.sin(centre.angle) + dz * Math.cos(centre.angle)
-  return Math.abs(localX) < shape.w / 2 + margin && Math.abs(localZ) < shape.d / 2 + margin
+  const outsideX = Math.abs(localX) - shape.w / 2
+  const outsideZ = Math.abs(localZ) - shape.d / 2
+  if (margin === 0) return outsideX < 0 && outsideZ < 0
+  return Math.hypot(Math.max(outsideX, 0), Math.max(outsideZ, 0)) < margin
 }
 
 function reachOf(shape) {

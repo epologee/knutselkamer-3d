@@ -189,6 +189,7 @@ export const canvasTable = {
 
 export const storageBin = {
   name: 'Witte opbergbak',
+  tucksUnder: true,
   size: [0.5, 0.3, 0.3],
   build(m) {
     const [width, height, depth] = this.size

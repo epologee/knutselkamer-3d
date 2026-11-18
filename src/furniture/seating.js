@@ -29,6 +29,7 @@ export const armchair = {
 
 export const woodenChair = {
   name: 'Houten stoel met kussen',
+  tucksUnder: true,
   size: [0.5, 0.84, 0.52],
   build(m) {
     const seat = 0.44
@@ -53,6 +54,7 @@ export const woodenChair = {
 
 export const officeChair = {
   name: 'Bureaustoel cognac leer',
+  tucksUnder: true,
   size: [0.62, 0.9, 0.62],
   build(m) {
     const parts = [cylinder(0.028, 0.3, [0, 0.08, 0], m.blackMetal), cylinder(0.045, 0.06, [0, 0.36, 0], m.black)]

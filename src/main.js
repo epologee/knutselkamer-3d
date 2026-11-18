@@ -84,6 +84,7 @@ function buildPiece(piece, materials) {
   }
   piece.object = object
   piece.bed = object.userData.bed ?? null
+  object.visible = !piece.item.removed
   scene.add(object)
   return piece
 }
@@ -203,7 +204,7 @@ async function start() {
     viewSettled = setTimeout(keepViewInAddress, 400)
   })
   let walking
-  const facts = enableFacts({ scene, pieces, bounds: ROOM, invalidate })
+  const facts = enableFacts({ scene, pieces, bounds: ROOM, invalidate, choose: (id) => rearranging.choose(id) })
   const rearranging = enableRearranging({
     canvas, camera, controls, room, pieces, invalidate, invalidateShadows, bounds: ROOM,
     isPaused: () => Boolean(walking?.isActive()),

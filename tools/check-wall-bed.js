@@ -29,12 +29,12 @@ const before = { floor: await areaOf(0), table: await areaOf(1), top: await area
 expect(before.table === 21957, `table height should start at 21957 cm², got ${before.table}`)
 expect(before.top === 16977, `cabinet tops should start at 16977 cm², got ${before.top}`)
 
-await page.locator('.level').nth(1).click()
+await page.locator('#facts-levels .level').nth(1).click()
 await page.waitForTimeout(300)
-expect((await page.locator('.level').nth(1).getAttribute('aria-pressed')) === 'true', 'clicking a level should press it')
+expect((await page.locator('#facts-levels .level').nth(1).getAttribute('aria-pressed')) === 'true', 'clicking a level should press it')
 expect(await page.locator('.level-parts:not([hidden]) li').count() >= 4, 'a pressed level should list what it counts')
 await page.screenshot({ path: `${outputPrefix}-table-level.png` })
-await page.locator('.level').nth(1).click()
+await page.locator('#facts-levels .level').nth(1).click()
 
 const shelf = { x: 470, y: 240 }
 await page.mouse.click(shelf.x, shelf.y)

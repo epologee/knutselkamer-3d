@@ -4,7 +4,11 @@ Een kamer van 278 bij 427 cm, nagebouwd als three.js-scene op basis van een iPho
 
 ## Bekijken
 
-`https://knutselkamer.test` start de Vite dev-server via de gedeelde Caddy. De pagina herlaadt zelf bij elke wijziging in de broncode en na een herstart van de server. Het camerastandpunt staat in de URL (`?camera=x,y,z`), dus een herlaad laat het beeld staan. Verplaatste meubels blijven per browser bewaard; "Zet alles terug" herstelt de indeling uit de scan.
+`https://knutselkamer.test` start de Vite dev-server via de gedeelde Caddy. De pagina herlaadt zelf bij elke wijziging in de broncode en na een herstart van de server. Het camerastandpunt staat in de URL (`?camera=x,y,z`), dus een herlaad laat het beeld staan. Verplaatste meubels blijven per browser bewaard; "Zet indeling terug" herstelt de gekozen indeling.
+
+Het paneel "Maten" linksboven toont de binnenmaten van de kamer, de indelingen waartussen je kiest en drie oppervlaktes: vrije vloer, tafelhoogte en bovenop de kasten. Klik op een oppervlakte om de getelde vlakken in de kamer te kleuren en de opbouw te zien. Een tafel telt op de vloer als bezet, ook als er ruimte onder is.
+
+Selecteer de vakkenkast om er een bedkast in te bouwen: een horizontaal opklapbed van 215 cm breed, 42 cm diep en 111 cm hoog, met bureaublad, in de onderste drie rijen aan de raamkant. Het bed klapt geanimeerd uit; het selectiepaneel noemt de meubels die het uitgeklapte bed zou raken.
 
 Met "Rondlopen" sta je in de kamer op ooghoogte, met alle wanden en het plafond in beeld. Sleep om rond te kijken, loop met WASD of de pijltjes (op een aanraakscherm met de stick linksonder) en ga terug met Escape of de knop. Meubels en wanden houden je tegen. Het standpunt staat in de URL (`?walk=x,z,draaiing`).
 
@@ -13,9 +17,12 @@ Zonder Caddy: `npm install` en `npm run dev`.
 ## Opbouw
 
 - `src/room.js`: de vier wanden met deur, raam, plinten, radiator, gordijnen en de schilderijen. Alles wat aan een wand hangt verdwijnt samen met die wand.
-- `src/furniture/`: één object per meubel met `name`, `size` (breedte, hoogte, diepte in meters) en `build(materials)`. De oorsprong ligt op de vloer in het midden van het grondvlak, de voorkant wijst naar lokaal +Z.
-- `src/layout.js`: de catalogus van meubeltypen en `scannedLayout`, de plek en draaiing van elk meubel zoals de scan het aantrof. Een nieuw meubel is een nieuw object in `src/furniture/` plus een regel hier.
-- `src/interaction.js`: selecteren, verslepen binnen de kamer en draaien.
+- `src/furniture/`: één object per meubel met `name`, `size` (breedte, hoogte, diepte in meters) en `build(materials, item)`. De oorsprong ligt op de vloer in het midden van het grondvlak, de voorkant wijst naar lokaal +Z. Optioneel: `footprint` (grondvlakken als dat niet het hele `size`-blok is), `surfaces` (bladen op tafelhoogte of bovenop, met hoogte) en `tucksUnder` (mag onder een tafel staan). `wall-bed.js` is de bedkast die de vakkenkast als variant inbouwt.
+- `src/layout.js`: de catalogus van meubeltypen, `scannedLayout` (de plek en draaiing van elk meubel zoals de scan het aantrof) en `arrangements`, de indelingen in het paneel. Een nieuw meubel is een nieuw object in `src/furniture/` plus een regel hier.
+- `src/surfaces.js`: grondvlakken, bladen, het vloerraster van een vierkante centimeter en de oranje markering in de kamer.
+- `src/facts.js`: het paneel "Maten".
+- `src/layout-check.js`: toetst een indeling op overlap, de draai van de deur, de radiator, het uitgeklapte bed en een vrije doorgang van 50 cm vanaf de deur naar elk meubel.
+- `src/interaction.js`: selecteren, verslepen binnen de kamer, draaien, de bedkast en het kiezen van een indeling.
 - `src/walking.js`: rondlopen in de kamer, met botsing tegen wanden en de grondvlakken van de meubels.
 - `src/main.js`: renderer, licht, ambient occlusion en de lichtprobe van de kamer zelf.
 
@@ -40,6 +47,9 @@ Met de site draaiend:
 
 - `node tools/screenshot.js https://knutselkamer.test/ beeld.png` maakt een render in headless Chromium.
 - `node tools/check-rearranging.js https://knutselkamer.test/ reference/rearrange` doorloopt selecteren, verslepen, draaien, herladen en terugzetten.
+- `node tools/check-wall-bed.js https://knutselkamer.test/ reference/bed` telt de oppervlaktes, bouwt de bedkast in, klapt hem uit, herlaadt en zet terug.
+- `node tools/check-layouts.js [id]` toetst de indelingen uit `src/layout.js` zonder browser en meldt per indeling de oppervlaktes en wat in de weg staat.
+- `node tools/search-layouts.js <doel> <stappen> <seed>` zoekt met simulated annealing een indeling met de bedkast op zijn plek, met de rug van elk meubel tegen een wand. Doelen: `plain`, `daylight` (werktafel en fauteuil bij het raam), `overview` (zicht op de deur) en `workshop` (werkbladen samen langs één wand). De uitkomst is een startpunt om met de hand af te maken.
 - `node tools/check-walking.js https://knutselkamer.test/ reference/walk` loopt de kamer in, tegen een meubel aan, kijkt om en gaat terug naar het overzicht.
 - `node tools/check-live-reload.js https://knutselkamer.test/` controleert dat een bronwijziging de pagina herlaadt met behoud van het standpunt.
 - `node tools/check-slow-textures.js https://knutselkamer.test/ beeld.png` vertraagt de fototexturen en controleert dat het eerste beeld erop wacht.

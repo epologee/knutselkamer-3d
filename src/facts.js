@@ -1,3 +1,4 @@
+import { arrangements, chosenArrangement } from './layout.js'
 import { LEVELS, createHighlight, measure } from './surfaces.js'
 
 const OPEN_KEY = 'knutselkamer-facts-open'
@@ -25,7 +26,29 @@ function remember(open) {
   }
 }
 
-export function enableFacts({ scene, pieces, bounds, invalidate }) {
+export function enableFacts({ scene, pieces, bounds, invalidate, choose }) {
+  const arrangementList = document.querySelector('#facts-arrangements')
+  const arrangementButtons = arrangements.map((arrangement) => {
+    const item = document.createElement('li')
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.className = 'level arrangement'
+    button.innerHTML = '<span class="swatch round" aria-hidden="true"></span><span><span class="level-name"></span><span class="arrangement-note"></span></span>'
+    button.querySelector('.level-name').textContent = arrangement.name
+    button.querySelector('.arrangement-note').textContent = arrangement.note ?? ''
+    button.addEventListener('click', () => {
+      choose(arrangement.id)
+      showArrangement()
+    })
+    item.append(button)
+    arrangementList.append(item)
+    return { arrangement, button }
+  })
+  function showArrangement() {
+    const chosen = chosenArrangement()
+    for (const { arrangement, button } of arrangementButtons) button.setAttribute('aria-pressed', String(arrangement === chosen))
+  }
+  showArrangement()
   const panel = document.querySelector('#facts')
   const toggle = document.querySelector('#facts-toggle')
   const list = document.querySelector('#facts-levels')

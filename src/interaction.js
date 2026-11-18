@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { forgetLayout, saveLayout, scannedLayout } from './layout.js'
+import { arrangementItems, chooseArrangement, forgetLayout, saveLayout } from './layout.js'
 import { bedBlockers } from './surfaces.js'
 
 const CLICK_DISTANCE = 6
@@ -51,7 +51,8 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
   function pieceUnderPointer(event) {
     aim(event)
     const occluders = room.walls.filter((wall) => wall.group.visible).map((wall) => wall.group)
-    const hits = raycaster.intersectObjects([...pieces.map((piece) => piece.object), ...occluders], true)
+    const shown = pieces.filter((piece) => piece.object.visible).map((piece) => piece.object)
+    const hits = raycaster.intersectObjects([...shown, ...occluders], true)
     const first = hits.find((hit) => hit.object !== marker)
     return first?.object.userData.piece ?? null
   }
@@ -78,9 +79,10 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
   }
 
   function showResetWhenMoved() {
+    const planned = arrangementItems()
     const moved = pieces.some(({ item }) => {
-      const original = scannedLayout.find((entry) => entry.id === item.id)
-      return original.x !== item.x || original.z !== item.z || original.rotation !== item.rotation || Boolean(item.variant)
+      const original = planned.find((entry) => entry.id === item.id)
+      return original.x !== item.x || original.z !== item.z || original.rotation !== item.rotation || original.variant !== item.variant || Boolean(original.bedOpen) !== Boolean(item.bedOpen)
     })
     resetButton.hidden = !moved
   }
@@ -195,25 +197,30 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
   rotateButton.addEventListener('click', rotateSelected)
   variantButton.addEventListener('click', toggleBedVariant)
   foldButton.addEventListener('click', foldSelected)
-  resetButton.addEventListener('click', () => {
-    forgetLayout()
+  function restore() {
     select(null)
+    const planned = arrangementItems()
     for (const piece of pieces) {
-      const original = scannedLayout.find((entry) => entry.id === piece.item.id)
-      const hadVariant = Boolean(piece.item.variant)
-      delete piece.item.variant
-      delete piece.item.bedOpen
+      const original = planned.find((entry) => entry.id === piece.item.id)
+      const changedVariant = piece.item.variant !== original.variant || Boolean(piece.item.bedOpen) !== Boolean(original.bedOpen)
+      for (const key of Object.keys(piece.item)) delete piece.item[key]
       Object.assign(piece.item, original)
       piece.object.position.set(original.x, 0, original.z)
       piece.object.rotation.y = THREE.MathUtils.degToRad(original.rotation)
-      if (hadVariant) {
+      if (changedVariant) {
         rebuild(piece)
         tag(piece)
       }
+      piece.object.visible = !original.removed
     }
     showResetWhenMoved()
     invalidateShadows()
     onLayoutChange()
+  }
+
+  resetButton.addEventListener('click', () => {
+    forgetLayout()
+    restore()
   })
   addEventListener('keydown', (event) => {
     if (isPaused()) return
@@ -226,5 +233,10 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
   hint.classList.add('shown')
   setTimeout(() => hint.classList.remove('shown'), 9000)
 
-  return { deselect: () => select(null) }
+  function choose(id) {
+    chooseArrangement(id)
+    restore()
+  }
+
+  return { deselect: () => select(null), choose }
 }
