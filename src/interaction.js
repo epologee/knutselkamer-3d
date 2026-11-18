@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { arrangementItems, chooseArrangement, forgetLayout, saveLayout } from './layout.js'
+import { arrangementItems, chooseArrangement, chosenArrangement, forgetLayout, saveLayout } from './layout.js'
 import { bedBlockers } from './surfaces.js'
 
 const CLICK_DISTANCE = 6
@@ -26,6 +26,7 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
   const rotateButton = document.querySelector('#rotate')
   const variantButton = document.querySelector('#variant')
   const foldButton = document.querySelector('#fold')
+  const hideButton = document.querySelector('#hide')
   const resetButton = document.querySelector('#reset')
   const hint = document.querySelector('#hint')
 
@@ -227,11 +228,45 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
     forgetLayout()
     restore()
   })
+  function setHidden(piece, hidden) {
+    piece.item.removed = hidden
+    piece.object.visible = !hidden
+    if (hidden && piece === selected) select(null)
+    record(piece)
+    invalidateShadows()
+  }
+
+  function hideSelected() {
+    if (selected) setHidden(selected, true)
+  }
+
+  hideButton.addEventListener('click', hideSelected)
   addEventListener('keydown', (event) => {
     if (isPaused()) return
+    if (event.target.closest?.('input, textarea')) return
     if (event.key === 'r' || event.key === 'R') rotateSelected()
+    if (event.key === 'Delete' || event.key === 'Backspace') hideSelected()
     if (event.key === 'Escape') select(null)
   })
+
+  function bring(id) {
+    const piece = pieces.find((each) => each.item.id === id)
+    if (piece) setHidden(piece, false)
+  }
+
+  function describe() {
+    const round = (value) => Math.round(value * 1000) / 1000
+    const items = pieces.map(({ item }) => ({
+      id: item.id,
+      type: item.type,
+      x: round(item.x),
+      z: round(item.z),
+      rotation: item.rotation,
+      ...(item.variant && { variant: item.variant, bedOpen: Boolean(item.bedOpen) }),
+      ...(item.removed && { removed: true }),
+    }))
+    return JSON.stringify({ arrangement: chosenArrangement().id, items }, null, 2)
+  }
 
   showResetWhenMoved()
   hint.textContent = 'Sleep om rond te kijken. Klik op een meubel om het te verplaatsen.'
@@ -243,5 +278,5 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
     restore()
   }
 
-  return { deselect: () => select(null), choose }
+  return { deselect: () => select(null), choose, bring, describe }
 }

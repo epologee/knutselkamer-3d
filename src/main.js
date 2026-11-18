@@ -207,7 +207,12 @@ async function start() {
     }
   })
   let walking
-  const facts = enableFacts({ scene, pieces, bounds: ROOM, invalidate, choose: (id) => rearranging.choose(id) })
+  const facts = enableFacts({
+    scene, pieces, bounds: ROOM, invalidate,
+    choose: (id) => rearranging.choose(id),
+    bring: (id) => rearranging.bring(id),
+    describe: () => rearranging.describe(),
+  })
   const rearranging = enableRearranging({
     canvas, camera, controls, room, pieces, invalidate, invalidateShadows, bounds: ROOM,
     isPaused: () => Boolean(walking?.isActive()),

@@ -26,7 +26,53 @@ function remember(open) {
   }
 }
 
-export function enableFacts({ scene, pieces, bounds, invalidate, choose }) {
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    const field = Object.assign(document.createElement('textarea'), { value: text })
+    document.body.append(field)
+    field.select()
+    const copied = document.execCommand('copy')
+    field.remove()
+    return copied
+  }
+}
+
+export function enableFacts({ scene, pieces, bounds, invalidate, choose, bring, describe }) {
+  const hiddenSection = document.querySelector('#facts-hidden')
+  const hiddenList = document.querySelector('#hidden-list')
+  const copyButton = document.querySelector('#copy-layout')
+  let copyReset
+  copyButton.addEventListener('click', async () => {
+    const copied = await copyText(describe())
+    copyButton.textContent = copied ? 'Gekopieerd' : 'Kopiëren lukte niet'
+    clearTimeout(copyReset)
+    copyReset = setTimeout(() => (copyButton.textContent = 'Kopieer indeling'), 2000)
+  })
+
+  function showHidden() {
+    const bedInside = pieces.some(({ item }) => item.variant === 'bed')
+    const hidden = pieces.filter(({ item, spec }) => item.removed && !(spec.sleeps && bedInside))
+    hiddenSection.hidden = hidden.length === 0
+    hiddenList.replaceChildren(
+      ...hidden.map(({ item, spec }) => {
+        const line = document.createElement('li')
+        const name = document.createElement('span')
+        name.textContent = spec.name
+        const button = document.createElement('button')
+        button.type = 'button'
+        button.className = 'small'
+        button.textContent = 'Terugzetten'
+        button.setAttribute('aria-label', `${spec.name} terugzetten`)
+        button.addEventListener('click', () => bring(item.id))
+        line.append(name, button)
+        return line
+      }),
+    )
+  }
+
   const arrangementList = document.querySelector('#facts-arrangements')
   const arrangementButtons = arrangements.map((arrangement) => {
     const item = document.createElement('li')
@@ -103,6 +149,7 @@ export function enableFacts({ scene, pieces, bounds, invalidate, choose }) {
         )
       }
     }
+    showHidden()
     highlight.show(shown, pieces, latest)
     invalidate()
   }

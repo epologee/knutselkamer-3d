@@ -35,6 +35,7 @@
       .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
       #facts { position: fixed; left: 16px; top: calc(16px + env(safe-area-inset-top)); width: 248px; max-width: calc(100% - 32px); box-sizing: border-box; border-radius: 16px; padding: 4px 4px 10px; background: #141414b8; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border: 1px solid #ffffff33; opacity: 0; pointer-events: none; transition: opacity 0.4s; }
       .ready #facts { opacity: 1; pointer-events: auto; }
+      #facts { max-height: calc(100% - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y: auto; overscroll-behavior: contain; }
       #facts.collapsed { width: auto; padding-bottom: 4px; border-radius: 999px; }
       #facts.collapsed #facts-body { display: none; }
       #facts-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: none; border: 0; font-weight: 600; padding: 8px 12px; min-height: 36px; }
@@ -60,6 +61,11 @@
       .level[aria-pressed="true"] .swatch { background: #ff9d4d; }
       .level-parts { margin: 2px 0 6px 26px; padding-right: 8px; font-size: 12px; color: #ffffffb3; }
       .level-parts li { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; }
+      button.small { font-size: 13px; min-height: 32px; padding: 5px 12px; }
+      #copy-layout { margin: 6px 12px 0; }
+      #hidden-list { list-style: none; margin: 0; padding: 0 12px; }
+      #hidden-list li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 2px 0; }
+      #facts-hidden[hidden] { display: none; }
       @media (max-width: 980px) { #hint { top: auto; bottom: calc(92px + env(safe-area-inset-bottom)); } }
       @media (max-width: 560px) { #facts { width: 208px; font-size: 13px; } #selection { flex-wrap: wrap; } }
       @media (prefers-reduced-motion: reduce) { #loader div { animation: none; width: 100%; } }
@@ -87,8 +93,13 @@
         </dl>
         <h2>Indeling</h2>
         <ul id="facts-arrangements"></ul>
+        <button id="copy-layout" type="button" class="small">Kopieer indeling</button>
         <h2>Oppervlak</h2>
         <ul id="facts-levels"></ul>
+        <div id="facts-hidden" hidden>
+          <h2>Verborgen</h2>
+          <ul id="hidden-list"></ul>
+        </div>
       </div>
     </section>
     <div id="selection" class="pill" hidden>
@@ -101,6 +112,7 @@
         <button id="rotate" type="button">Kwartslag draaien</button>
         <button id="variant" type="button" hidden></button>
         <button id="fold" type="button" hidden></button>
+        <button id="hide" type="button">Verbergen</button>
       </div>
     </div>
     <script type="module" src="/src/main.js"></script>
