@@ -40,6 +40,7 @@ Met de site draaiend:
 - `node tools/check-live-reload.js https://knutselkamer.test/` controleert dat een bronwijziging de pagina herlaadt met behoud van het standpunt.
 - `node tools/check-slow-textures.js https://knutselkamer.test/ beeld.png` vertraagt de fototexturen en controleert dat het eerste beeld erop wacht.
 - `node tools/measure-frames.js https://knutselkamer.test/ 2` draait de kamer rond op retina-resolutie en meldt de tijd tussen beelden en het aantal tekenopdrachten.
+- `node tools/find-coplanar.js https://knutselkamer.test/` zoekt vlakken met verschillend materiaal die in hetzelfde vlak liggen en elkaar overlappen. Zulke paren flikkeren in beeld.
 
 ## Publiceren
 

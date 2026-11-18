@@ -18,7 +18,7 @@ export const scannedLayout = [
   { id: 'drawer-cabinet', type: 'drawerCabinet', x: 1.01, z: -0.005, rotation: -86 },
   { id: 'office-chair', type: 'officeChair', x: 1.0, z: 0.9, rotation: 15 },
   { id: 'side-table', type: 'sideTable', x: 0.35, z: 0.85, rotation: 0 },
-  { id: 'archive-cabinet', type: 'archiveCabinet', x: 0.665, z: 1.605, rotation: 180 },
+  { id: 'archive-cabinet', type: 'archiveCabinet', x: 0.665, z: 1.6, rotation: 180 },
   { id: 'canvas-table', type: 'canvasTable', x: -0.145, z: 1.77, rotation: -90 },
   { id: 'storage-bin', type: 'storageBin', x: -0.49, z: 1.75, rotation: 80 },
   { id: 'folded-easel', type: 'foldedEasel', x: -0.44, z: 1.98, rotation: 180 },

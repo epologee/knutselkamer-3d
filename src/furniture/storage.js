@@ -297,7 +297,7 @@ export const archiveCabinet = {
 
     const blueBox = new THREE.MeshStandardMaterial({ color: '#4f9bd1', roughness: 0.8 })
     parts.push(
-      box([0.2, 0.17, 0.16], [0.06, CABINET.hatShelf, middle + 0.02], blueBox),
+      box([0.2, 0.17, 0.16], [0.0, CABINET.hatShelf, middle + 0.02], blueBox),
       box([0.3, 0.035, 0.24], [-0.28, CABINET.hatShelf, middle + 0.03], m.mint),
       box([0.34, 0.02, 0.26], [0.3, CABINET.hatShelf, middle + 0.02], m.burgundy),
       sphere(0.13, [0.3, CABINET.hatShelf + 0.06, middle + 0.02], m.black, [1, 0.38, 0.9]),

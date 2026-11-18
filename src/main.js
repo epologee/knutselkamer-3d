@@ -25,6 +25,7 @@ renderer.shadowMap.type = THREE.VSMShadowMap
 renderer.shadowMap.autoUpdate = false
 
 const scene = new THREE.Scene()
+canvas.inspectedScene = scene
 scene.background = new THREE.Color('#141414')
 
 const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 100)

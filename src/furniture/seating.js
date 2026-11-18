@@ -55,7 +55,7 @@ export const officeChair = {
   name: 'Bureaustoel cognac leer',
   size: [0.62, 0.9, 0.62],
   build(m) {
-    const parts = [cylinder(0.028, 0.34, [0, 0.08, 0], m.blackMetal), cylinder(0.045, 0.06, [0, 0.36, 0], m.black)]
+    const parts = [cylinder(0.028, 0.3, [0, 0.08, 0], m.blackMetal), cylinder(0.045, 0.06, [0, 0.36, 0], m.black)]
     for (let i = 0; i < 5; i++) {
       const angle = (i / 5) * Math.PI * 2 + 0.3
       const tip = [Math.sin(angle) * 0.3, 0.06, Math.cos(angle) * 0.3]

@@ -76,7 +76,7 @@ function skirting(definition, m) {
   for (let i = 0; i < stops.length; i += 2) {
     const from = stops[i]
     const to = stops[i + 1]
-    pieces.push(box([to - from, 0.07, 0.012], [(from + to) / 2, 0, 0.006], m.trim))
+    if (to - from > 0.01) pieces.push(box([to - from, 0.07, 0.012], [(from + to) / 2, 0, 0.006], m.trim))
   }
   return pieces
 }
@@ -88,7 +88,7 @@ function doorSet(m) {
   const casing = 0.07
   const parts = [
     box([width - 0.008, top - 0.008, 0.04], [middle, 0.004, -0.045], m.door),
-    box([casing, top + casing, 0.02], [u0 - casing / 2, 0, 0.01], m.trim),
+    box([casing - 0.002, top + casing, 0.02], [u0 - casing / 2 + 0.001, 0, 0.01], m.trim),
     box([casing, top + casing, 0.02], [u1 + casing / 2, 0, 0.01], m.trim),
     box([width, casing, 0.02], [middle, top, 0.01], m.trim),
     box([0.035, 0.16, 0.008], [u1 - 0.085, 0.98, -0.021], m.steel),
@@ -139,7 +139,7 @@ function windowSet(m) {
     frame([sash, height - 2 * bar, 0.05], [sashRight - sash / 2, v0 + bar, frameDepth + 0.03]),
     box([0.02, 0.11, 0.035], [sashLeft + sash / 2, v0 + height / 2 - 0.05, frameDepth + 0.07], m.steel),
     box([mullion - u0 - bar, 0.2, 0.03], [(u0 + mullion) / 2, v1 - bar - 0.2, frameDepth + 0.055], m.grey),
-    box([u1 - u0 + 0.1, 0.03, 0.2], [middle, v0 - 0.03, -0.02], m.trim),
+    box([u1 - u0 + 0.1, 0.034, 0.2], [middle, v0 - 0.03, -0.02], m.trim),
   )
 
   const glass = new THREE.Mesh(
