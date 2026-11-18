@@ -1,15 +1,16 @@
 const IDLE_DELAY = 7000
+const INITIAL_DELAY = 1000
 const EASE_IN = 4000
-const CRUISING_SPEED = 0.15
+const CRUISING_SPEED = 1
 
 export function enableIdleRotation(controls, isPaused) {
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)')
   const pointers = new Set()
   const keys = new Set()
-  let lastInteraction = performance.now()
+  let rotateAt = performance.now() + INITIAL_DELAY
 
   function restart() {
-    lastInteraction = performance.now()
+    rotateAt = performance.now() + IDLE_DELAY
     controls.autoRotate = false
     controls.autoRotateSpeed = 0
   }
@@ -42,14 +43,15 @@ export function enableIdleRotation(controls, isPaused) {
   reducedMotion.addEventListener('change', restart)
   controls.addEventListener('start', restart)
   controls.addEventListener('end', restart)
-  restart()
+  controls.autoRotate = false
+  controls.autoRotateSpeed = 0
 
   return () => {
     if (document.hidden || reducedMotion.matches || pointers.size || keys.size || !controls.enabled || isPaused()) {
       restart()
       return
     }
-    const progress = Math.max(0, Math.min(1, (performance.now() - lastInteraction - IDLE_DELAY) / EASE_IN))
+    const progress = Math.max(0, Math.min(1, (performance.now() - rotateAt) / EASE_IN))
     controls.autoRotate = progress > 0
     controls.autoRotateSpeed = CRUISING_SPEED * progress ** 2
   }
