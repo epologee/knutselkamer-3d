@@ -12,6 +12,8 @@ Selecteer de vakkenkast om er een bedkast in te bouwen: een horizontaal opklapbe
 
 Met "Rondlopen" sta je in de kamer op ooghoogte, met alle wanden en het plafond in beeld. Sleep om rond te kijken, loop met WASD of de pijltjes (op een aanraakscherm met de stick linksonder) en ga terug met Escape of de knop. Meubels en wanden houden je tegen. Het standpunt staat in de URL (`?walk=x,z,draaiing`).
 
+Zodra de scene geladen is, begint het overzicht rond te draaien, met vier seconden geleidelijke versnelling naar maximaal één rondje per 90 seconden. Indrukken, klikken, aanraken, slepen, scrollen of toetsen stoppen de automatische rotatie en beginnen een nieuwe wachttijd van 7 seconden. Losse muisbewegingen en focus- of tabwissels tellen niet mee. Tijdens rondlopen, vasthouden of verslepen en met de systeemvoorkeur voor minder beweging blijft de automatische rotatie uit. De browser kan het tekenen van een verborgen tabblad pauzeren; terugkeren voegt geen nieuwe wachttijd toe. Automatische rotatie overschrijft het bewaarde camerastandpunt niet.
+
 Zonder Caddy: `npm install` en `npm run dev`.
 
 ## Opbouw
@@ -25,6 +27,7 @@ Zonder Caddy: `npm install` en `npm run dev`.
 - `src/interaction.js`: selecteren, verslepen binnen de kamer, draaien, de bedkast en het kiezen van een indeling.
 - `src/walking.js`: rondlopen in de kamer, met botsing tegen wanden en de grondvlakken van de meubels.
 - `src/main.js`: renderer, licht, ambient occlusion en de lichtprobe van de kamer zelf.
+- `src/idle-rotation.js`: automatische rotatie na inactiviteit, met ease-in en respect voor de systeemvoorkeur voor minder beweging.
 
 Het assenstelsel is in meters, +Y omhoog, oorsprong op de vloer in het midden van de kamer. De raamwand staat op -Z, de deurwand op -X.
 
@@ -45,6 +48,7 @@ Een meubel verplaatsen of toevoegen in `src/layout.js` begint dus bij een meting
 
 Met de site draaiend:
 
+- `node tools/check-idle-rotation.js <preview-url>` controleert de wachttijd, ease-in, camerabeweging, onderbreking en hervatting, vasthouden, minder beweging en rondlopen in headless Chromium.
 - `node tools/screenshot.js https://knutselkamer.test/ beeld.png` maakt een render in headless Chromium.
 - `node tools/check-rearranging.js https://knutselkamer.test/ reference/rearrange` doorloopt selecteren, verslepen, draaien, herladen en terugzetten.
 - `node tools/check-wall-bed.js https://knutselkamer.test/ reference/bed` telt de oppervlaktes, bouwt de bedkast in, klapt hem uit, herlaadt en zet terug.

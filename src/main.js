@@ -7,6 +7,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { enableFacts } from './facts.js'
 import { enableRearranging } from './interaction.js'
+import { enableIdleRotation } from './idle-rotation.js'
 import { consolidate } from './kit.js'
 import { catalog, loadLayout } from './layout.js'
 import { createMaterials } from './materials.js'
@@ -200,8 +201,10 @@ async function start() {
   controls.addEventListener('change', () => {
     invalidate()
     whileMoving()
-    clearTimeout(viewSettled)
-    viewSettled = setTimeout(keepViewInAddress, 400)
+    if (!controls.autoRotate) {
+      clearTimeout(viewSettled)
+      viewSettled = setTimeout(keepViewInAddress, 400)
+    }
   })
   let walking
   const facts = enableFacts({ scene, pieces, bounds: ROOM, invalidate, choose: (id) => rearranging.choose(id) })
@@ -273,11 +276,13 @@ async function start() {
   }
 
   const clock = new THREE.Timer()
+  const updateIdleRotation = enableIdleRotation(controls, () => walking.isActive())
   renderer.setAnimationLoop(() => {
     clock.update()
     const seconds = Math.min(clock.getDelta(), 0.1)
+    updateIdleRotation()
     if (walking.isActive()) walking.update(seconds)
-    else controls.update()
+    else controls.update(seconds)
     for (const piece of pieces) if (piece.bed?.step(seconds)) invalidateShadows()
     if (sharpenAt && performance.now() > sharpenAt) {
       sharpenAt = 0
