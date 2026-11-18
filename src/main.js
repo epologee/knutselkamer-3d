@@ -80,6 +80,10 @@ function addFurniture(materials) {
 
 async function start() {
   const pictures = await fetch(`${import.meta.env.BASE_URL}baked/pictures.json`).then((response) => response.json())
+  const photosLoaded = new Promise((resolve) => {
+    THREE.DefaultLoadingManager.onLoad = resolve
+    THREE.DefaultLoadingManager.onError = resolve
+  })
   const materials = createMaterials()
   const room = buildRoom(materials, pictures)
   scene.add(room.root)
@@ -151,6 +155,8 @@ async function start() {
   })
   enableRearranging({ canvas, camera, controls, room, pieces, invalidate, invalidateShadows, bounds: ROOM })
 
+  await photosLoaded
+  THREE.DefaultLoadingManager.onLoad = invalidate
   refreshShadows()
   bakeRoomLight()
   await renderer.compileAsync(scene, camera)
