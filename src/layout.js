@@ -24,6 +24,8 @@ export const scannedLayout = [
   { id: 'folded-easel', type: 'foldedEasel', x: -0.44, z: 1.98, rotation: 180 },
 ]
 
+export const arrangements = [{ id: 'scan', name: 'Zoals gescand', items: scannedLayout }]
+
 const STORAGE_KEY = 'knutselkamer-layout-v2'
 
 export function loadLayout() {
@@ -38,7 +40,7 @@ export function loadLayout() {
 
 export function saveLayout(items) {
   const moved = {}
-  for (const { id, x, z, rotation } of items) moved[id] = { x, z, rotation }
+  for (const { id, x, z, rotation, variant, bedOpen } of items) moved[id] = { x, z, rotation, ...(variant && { variant, bedOpen: Boolean(bedOpen) }) }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(moved))
   } catch {

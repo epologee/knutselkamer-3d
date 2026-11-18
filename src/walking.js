@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { covers, footprintOf } from './surfaces.js'
 
 const EYE_HEIGHT = 1.6
 const BODY_RADIUS = 0.15
@@ -8,14 +9,7 @@ const LOOK_PER_PIXEL = 0.005
 const STARTING_POINT = { x: 0.3, z: 0.0, yaw: -Math.PI / 2 }
 
 function blockedBy(piece, x, z) {
-  if (piece.spec.flat) return false
-  const [width, , depth] = piece.spec.size
-  const angle = piece.object.rotation.y
-  const dx = x - piece.object.position.x
-  const dz = z - piece.object.position.z
-  const localX = dx * Math.cos(angle) - dz * Math.sin(angle)
-  const localZ = dx * Math.sin(angle) + dz * Math.cos(angle)
-  return Math.abs(localX) < width / 2 + BODY_RADIUS && Math.abs(localZ) < depth / 2 + BODY_RADIUS
+  return footprintOf(piece).some((shape) => covers(piece, shape, x, z, BODY_RADIUS))
 }
 
 export function enableWalking({ canvas, camera, controls, pieces, bounds, invalidate, onStart, onMove, query }) {

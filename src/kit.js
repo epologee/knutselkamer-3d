@@ -110,9 +110,10 @@ export function consolidate(root, { keepOrigin = false } = {}) {
   root.updateMatrixWorld(true)
   const toRoot = keepOrigin ? root.matrixWorld.clone().invert() : new THREE.Matrix4()
   const batches = new Map()
+  const moves = (object) => object && object !== root && (object.userData.movable || moves(object.parent))
   root.traverse((child) => {
     const plain = child.isMesh && !child.isInstancedMesh && !Array.isArray(child.material) && !child.userData.picture
-    if (!plain || !child.geometry.attributes.uv || !child.geometry.attributes.normal) return
+    if (!plain || moves(child) || !child.geometry.attributes.uv || !child.geometry.attributes.normal) return
     const key = `${child.material.uuid}|${child.castShadow}|${child.receiveShadow}`
     if (!batches.has(key)) batches.set(key, { material: child.material, castShadow: child.castShadow, receiveShadow: child.receiveShadow, meshes: [] })
     batches.get(key).meshes.push(child)

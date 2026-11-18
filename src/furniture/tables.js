@@ -25,6 +25,7 @@ function glockenspiel(m) {
 export const desk = {
   name: 'Werktafel donker hout',
   size: [1.42, 0.74, 0.6],
+  surfaces: [{ level: 'table', label: 'Werktafel', x: 0, z: 0, w: 1.42, d: 0.6, y: 0.74 }],
   build(m) {
     const [width, height, depth] = this.size
     const top = 0.06
@@ -60,8 +61,9 @@ export const desk = {
 }
 
 export const sideTable = {
-  name: 'Rond bijzettafeltje wit',
+  name: 'Rond krukje wit',
   size: [0.33, 0.56, 0.33],
+  footprint: [{ x: 0, z: 0, r: 0.165 }],
   build(m) {
     const [width, height] = this.size
     return group(

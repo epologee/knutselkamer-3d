@@ -12,6 +12,11 @@ const WINDOW_WALL = 0.3
 
 const DOOR = { u0: 0.07, u1: 0.97, top: 2.2 }
 const WINDOW = { u0: 0.56, u1: 2.53, v0: 1.02, v1: 2.08, mullion: 1.604, frameDepth: -0.12 }
+const RADIATOR = { centre: 1.68, width: 1.25, depth: 0.15 }
+
+export const DOOR_SWING = { hinge: { x: -HALF_WIDTH, z: HALF_DEPTH - DOOR.u0 }, radius: DOOR.u1 - DOOR.u0, towardZ: -1 }
+export const RADIATOR_ZONE = { x0: -HALF_WIDTH + RADIATOR.centre - RADIATOR.width / 2, x1: -HALF_WIDTH + RADIATOR.centre + RADIATOR.width / 2, z1: -HALF_DEPTH + RADIATOR.depth }
+export const ENTRANCE = { x: -HALF_WIDTH + 0.45, z: HALF_DEPTH - (DOOR.u0 + DOOR.u1) / 2 }
 
 const WALLS = {
   door: {
@@ -167,8 +172,7 @@ function windowSet(m) {
 }
 
 function radiator(m) {
-  const width = 1.25
-  const centre = 1.68
+  const { width, centre } = RADIATOR
   const parts = [box([width, 0.43, 0.07], [centre, 0.12, 0.075], m.white)]
   const ribs = 44
   for (let i = 0; i < ribs; i++) {

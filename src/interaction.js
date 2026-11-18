@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { forgetLayout, saveLayout, scannedLayout } from './layout.js'
+import { bedBlockers } from './surfaces.js'
 
 const CLICK_DISTANCE = 6
 const CLICK_MILLISECONDS = 500
@@ -17,11 +18,14 @@ function centimetres(metres) {
   return Math.round(metres * 100)
 }
 
-export function enableRearranging({ canvas, camera, controls, room, pieces, invalidate, invalidateShadows, bounds, isPaused }) {
+export function enableRearranging({ canvas, camera, controls, room, pieces, invalidate, invalidateShadows, bounds, isPaused, rebuild, onLayoutChange }) {
   const panel = document.querySelector('#selection')
   const title = document.querySelector('#selection-name')
   const measure = document.querySelector('#selection-size')
+  const note = document.querySelector('#selection-note')
   const rotateButton = document.querySelector('#rotate')
+  const variantButton = document.querySelector('#variant')
+  const foldButton = document.querySelector('#fold')
   const resetButton = document.querySelector('#reset')
   const hint = document.querySelector('#hint')
 
@@ -35,7 +39,8 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
   let press = null
   let dragging = false
 
-  for (const piece of pieces) piece.object.traverse((child) => (child.userData.piece = piece))
+  const tag = (piece) => piece.object.traverse((child) => (child.userData.piece = piece))
+  for (const piece of pieces) tag(piece)
 
   function aim(event) {
     const rect = canvas.getBoundingClientRect()
@@ -68,14 +73,51 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
     piece.item.rotation = Math.round(THREE.MathUtils.radToDeg(piece.object.rotation.y))
     saveLayout(pieces.map((each) => each.item))
     showResetWhenMoved()
+    if (piece === selected) describeBed(piece)
+    onLayoutChange()
   }
 
   function showResetWhenMoved() {
     const moved = pieces.some(({ item }) => {
       const original = scannedLayout.find((entry) => entry.id === item.id)
-      return original.x !== item.x || original.z !== item.z || original.rotation !== item.rotation
+      return original.x !== item.x || original.z !== item.z || original.rotation !== item.rotation || Boolean(item.variant)
     })
     resetButton.hidden = !moved
+  }
+
+  function describeBed(piece) {
+    const variants = piece?.spec.variants
+    variantButton.hidden = !variants?.bed
+    const withBed = piece?.item.variant === 'bed'
+    foldButton.hidden = !withBed
+    note.textContent = ''
+    if (!variants?.bed) return
+    variantButton.textContent = withBed ? 'Bedkast eruit' : 'Bedkast inbouwen'
+    if (!withBed) return
+    foldButton.textContent = piece.item.bedOpen ? 'Bed inklappen' : 'Bed uitklappen'
+    const blockers = bedBlockers(piece, pieces)
+    if (blockers.length) note.textContent = `Uitgeklapt raakt het bed: ${blockers.map((other) => other.spec.name).join(', ')}`
+  }
+
+  function toggleBedVariant() {
+    if (!selected?.spec.variants?.bed) return
+    const piece = selected
+    piece.item.variant = piece.item.variant === 'bed' ? undefined : 'bed'
+    piece.item.bedOpen = false
+    if (!piece.item.variant) delete piece.item.variant
+    rebuild(piece)
+    tag(piece)
+    record(piece)
+    select(piece)
+    invalidateShadows()
+  }
+
+  function foldSelected() {
+    if (!selected?.bed) return
+    selected.item.bedOpen = !selected.item.bedOpen
+    selected.bed.set(selected.item.bedOpen)
+    record(selected)
+    describeBed(selected)
   }
 
   function select(piece) {
@@ -93,6 +135,7 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
         : `${centimetres(width)} breed · ${centimetres(depth)} diep · ${centimetres(height)} hoog (cm)`
       hint.classList.remove('shown')
     }
+    describeBed(piece)
     invalidate()
   }
 
@@ -129,6 +172,7 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
     selected.object.position.z = onFloor.z + grabOffset.z
     keepInsideRoom(selected)
     invalidateShadows()
+    onLayoutChange()
   })
 
   function release(event) {
@@ -149,17 +193,27 @@ export function enableRearranging({ canvas, camera, controls, room, pieces, inva
   canvas.addEventListener('pointercancel', release)
 
   rotateButton.addEventListener('click', rotateSelected)
+  variantButton.addEventListener('click', toggleBedVariant)
+  foldButton.addEventListener('click', foldSelected)
   resetButton.addEventListener('click', () => {
     forgetLayout()
+    select(null)
     for (const piece of pieces) {
       const original = scannedLayout.find((entry) => entry.id === piece.item.id)
+      const hadVariant = Boolean(piece.item.variant)
+      delete piece.item.variant
+      delete piece.item.bedOpen
       Object.assign(piece.item, original)
       piece.object.position.set(original.x, 0, original.z)
       piece.object.rotation.y = THREE.MathUtils.degToRad(original.rotation)
+      if (hadVariant) {
+        rebuild(piece)
+        tag(piece)
+      }
     }
-    select(null)
     showResetWhenMoved()
     invalidateShadows()
+    onLayoutChange()
   })
   addEventListener('keydown', (event) => {
     if (isPaused()) return

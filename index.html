@@ -30,7 +30,33 @@
       @media (pointer: coarse) { .walking #stick { display: block; } }
       .walking #reset { display: none; }
       #frames { position: fixed; left: 12px; bottom: calc(10px + env(safe-area-inset-bottom)); font-size: 11px; color: #ffffff73; font-variant-numeric: tabular-nums; pointer-events: none; }
-      @media (max-width: 560px) { #hint { top: auto; bottom: calc(92px + env(safe-area-inset-bottom)); } }
+      #selection-note { color: #ffc48f; max-width: 34ch; }
+      #selection-note:empty, #variant[hidden], #fold[hidden] { display: none; }
+      .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+      #facts { position: fixed; left: 16px; top: calc(16px + env(safe-area-inset-top)); width: 248px; max-width: calc(100% - 32px); box-sizing: border-box; border-radius: 16px; padding: 4px 4px 10px; background: #141414b8; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border: 1px solid #ffffff33; opacity: 0; pointer-events: none; transition: opacity 0.4s; }
+      .ready #facts { opacity: 1; pointer-events: auto; }
+      #facts.collapsed { width: auto; padding-bottom: 4px; border-radius: 999px; }
+      #facts.collapsed #facts-body { display: none; }
+      #facts-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: none; border: 0; font-weight: 600; padding: 8px 12px; min-height: 36px; }
+      #facts-toggle:hover { background: #ffffff1a; }
+      #facts-toggle svg { transition: transform 0.2s; }
+      #facts-toggle[aria-expanded="false"] svg { transform: rotate(180deg); }
+      #facts h2 { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #ffffff80; margin: 10px 12px 4px; }
+      #facts dl { margin: 0 12px; display: grid; grid-template-columns: 1fr auto; row-gap: 2px; }
+      #facts dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+      #facts dt span { color: #ffffff80; }
+      #facts-levels, .level-parts { list-style: none; margin: 0; padding: 0; }
+      #facts-levels { padding: 0 4px; }
+      .level { width: 100%; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; text-align: left; background: none; border: 1px solid transparent; border-radius: 10px; padding: 5px 8px; min-height: 34px; }
+      .level:hover { background: #ffffff14; }
+      .level[aria-pressed="true"] { background: #ff9d4d26; border-color: #ff9d4d80; }
+      .level-area { font-variant-numeric: tabular-nums; }
+      .swatch { width: 10px; height: 10px; border-radius: 3px; border: 1.5px solid #ff9d4d; box-sizing: border-box; }
+      .level[aria-pressed="true"] .swatch { background: #ff9d4d; }
+      .level-parts { margin: 2px 0 6px 26px; padding-right: 8px; font-size: 12px; color: #ffffffb3; }
+      .level-parts li { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; }
+      @media (max-width: 980px) { #hint { top: auto; bottom: calc(92px + env(safe-area-inset-bottom)); } }
+      @media (max-width: 560px) { #facts { width: 208px; font-size: 13px; } #selection { flex-wrap: wrap; } }
       @media (prefers-reduced-motion: reduce) { #loader div { animation: none; width: 100%; } }
     </style>
   </head>
@@ -42,12 +68,33 @@
     <button id="reset" type="button" hidden>Zet alles terug</button>
     <button id="walk" type="button">Rondlopen</button>
     <div id="stick"><div></div></div>
+    <section id="facts" aria-label="Maten van de kamer">
+      <button id="facts-toggle" type="button" aria-expanded="true" aria-controls="facts-body">
+        Maten
+        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </button>
+      <div id="facts-body">
+        <h2>Kamer, binnenwerks</h2>
+        <dl>
+          <dt>Breedte <span>raamwand</span></dt><dd id="room-width"></dd>
+          <dt>Lengte</dt><dd id="room-length"></dd>
+          <dt>Hoogte</dt><dd id="room-height"></dd>
+        </dl>
+        <h2>Oppervlak</h2>
+        <ul id="facts-levels"></ul>
+      </div>
+    </section>
     <div id="selection" class="pill" hidden>
       <div>
         <div id="selection-name"></div>
         <div id="selection-size"></div>
+        <div id="selection-note" role="status"></div>
       </div>
-      <button id="rotate" type="button">Kwartslag draaien</button>
+      <div class="actions">
+        <button id="rotate" type="button">Kwartslag draaien</button>
+        <button id="variant" type="button" hidden></button>
+        <button id="fold" type="button" hidden></button>
+      </div>
     </div>
     <script type="module" src="/src/main.js"></script>
   </body>

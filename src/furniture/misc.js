@@ -150,6 +150,7 @@ export const foldedEasel = {
 export const canvasTable = {
   name: 'Houten tafeltje met doeken',
   size: [0.6, 0.88, 0.35],
+  surfaces: [{ level: 'table', label: 'Tafeltje met doeken', x: 0, z: 0, w: 0.6, d: 0.35, y: 0.88 }],
   build(m) {
     const [width, height, depth] = this.size
     const top = 0.035

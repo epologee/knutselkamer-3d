@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { box, cylinder, group, instancedBoxes, lathe, rod, seededRandom, sphere } from '../kit.js'
 import { photoTexture } from '../textures.js'
 import { createShelfFiller } from './shelf-contents.js'
+import { WALL_BED, bedReach, wallBed } from './wall-bed.js'
 
 const BOOK_COLOURS = ['#b3312b', '#22507a', '#e8e0cf', '#2f6b4f', '#d9a22b', '#1d1d1f', '#7c4a8a', '#c9c2b2', '#d86f2a', '#3d7fa6', '#f2efe6', '#8a2d3b']
 
@@ -65,32 +66,70 @@ function fillCubby(random, { x0, x1, y, clearHeight, depth }, books, extras, m) 
   }
 }
 
-const SHELF = { columnEdges: [0, 0.46, 0.995, 1.58, 2.09, 2.6], rows: 6, plinth: 0.08, board: 0.025, shortColumn: 1 }
+const SHELF = { columnEdges: [0, 0.46, 0.995, 1.58, 2.09, 2.6], height: 2.17, rows: 6, plinth: 0.08, board: 0.025, shortColumn: 1, bedRows: 3, bedEdge: 0.4375 }
+
+function shelfPlan(withBed) {
+  const { columnEdges, height, rows, plinth, board, bedRows, bedEdge } = SHELF
+  const edges = withBed ? columnEdges.map((edge, index) => (index === 1 ? bedEdge : edge)) : columnEdges
+  const cellHeight = (height - plinth - board) / rows
+  return { edges, shelfY: (row) => plinth + row * cellHeight, lowestRow: (column) => (withBed && column > 0 ? bedRows : 0) }
+}
+
+function bedPlacement(width, depth) {
+  const left = -width / 2 + SHELF.bedEdge + SHELF.board / 2
+  return { x: (left + width / 2) / 2, z: -depth / 2 + WALL_BED.depth / 2, left, height: shelfPlan(true).shelfY(SHELF.bedRows) }
+}
 
 export const shelfUnit = {
   name: 'Vakkenkast kersen',
-  size: [2.6, 2.17, 0.44],
-  build(m) {
+  size: [2.6, SHELF.height, 0.44],
+  variants: { bed: 'logeerbed' },
+  footprint(item = {}) {
+    const [width, , depth] = this.size
+    const shapes = [{ x: 0, z: 0, w: width, d: depth }]
+    if (item.variant === 'bed' && item.bedOpen) {
+      const bed = bedPlacement(width, depth)
+      const reach = bedReach(bed.height)
+      shapes.push({ x: bed.x, z: -depth / 2 + reach / 2, w: width / 2 - bed.left, d: reach })
+    }
+    return shapes
+  },
+  surfaces(item = {}) {
     const [width, height, depth] = this.size
-    const { columnEdges, rows, plinth, board, shortColumn } = SHELF
-    const columns = columnEdges.length - 1
+    const { edges, shelfY } = shelfPlan(item.variant === 'bed')
+    const { shortColumn, rows, board } = SHELF
+    const span = (from, to, y) => ({ level: 'top', label: 'Vakkenkast', x: -width / 2 + (from + to) / 2, z: 0, w: to - from, d: depth, y })
+    const list = [span(0, edges[shortColumn], height), span(edges[shortColumn], edges[shortColumn + 1], shelfY(rows - 1) + board), span(edges[shortColumn + 1], width, height)]
+    if (item.variant === 'bed' && !item.bedOpen) {
+      const bed = bedPlacement(width, depth)
+      const deskWidth = WALL_BED.width - 2 * WALL_BED.panel - 0.04
+      list.push({ level: 'table', label: 'Bureaublad bedkast', x: bed.x, z: bed.z + WALL_BED.depth / 2 + WALL_BED.deskDepth / 2, w: deskWidth, d: WALL_BED.deskDepth, y: WALL_BED.deskTop })
+    }
+    return list
+  },
+  build(m, item = {}) {
+    const [width, height, depth] = this.size
+    const withBed = item.variant === 'bed'
+    const { rows, plinth, board, shortColumn, bedRows } = SHELF
+    const { edges, shelfY, lowestRow } = shelfPlan(withBed)
+    const columns = edges.length - 1
     const random = seededRandom(42)
-    const cellHeight = (height - plinth - board) / rows
-    const boardX = (index) => -width / 2 + THREE.MathUtils.clamp(columnEdges[index], board / 2, width - board / 2)
-    const shelfY = (row) => plinth + row * cellHeight
+    const boardX = (index) => -width / 2 + THREE.MathUtils.clamp(edges[index], board / 2, width - board / 2)
     const topRow = (column) => (column === shortColumn ? rows - 1 : rows)
-    const parts = [box([width - 0.04, plinth, depth - 0.05], [0, 0, -0.01], m.cherry)]
+    const plinthWidth = withBed ? edges[1] : width
+    const parts = [box([plinthWidth - 0.04, plinth, depth - 0.05], [-width / 2 + plinthWidth / 2, 0, -0.01], m.cherry)]
     for (let i = 0; i <= columns; i++) {
       const tallest = Math.max(topRow(Math.max(i - 1, 0)), topRow(Math.min(i, columns - 1)))
-      parts.push(box([board, shelfY(tallest) + board - plinth, depth], [boardX(i), plinth, 0], m.cherry))
+      const bottom = withBed && i > 1 ? shelfY(bedRows) : plinth
+      parts.push(box([board, shelfY(tallest) + board - bottom, depth], [boardX(i), bottom, 0], m.cherry))
     }
     const filler = createShelfFiller(m)
     const books = []
     for (let column = 0; column < columns; column++) {
       const x0 = boardX(column) + board / 2
       const x1 = boardX(column + 1) - board / 2
-      for (let row = 0; row <= topRow(column); row++) parts.push(box([x1 - x0, board, depth - 0.004], [(x0 + x1) / 2, shelfY(row), 0], m.cherry))
-      for (let row = 0; row < topRow(column); row++) {
+      for (let row = lowestRow(column); row <= topRow(column); row++) parts.push(box([x1 - x0, board, depth - 0.004], [(x0 + x1) / 2, shelfY(row), 0], m.cherry))
+      for (let row = lowestRow(column); row < topRow(column); row++) {
         const y0 = shelfY(row) + board
         const y1 = shelfY(row + 1)
         const cell = { x0, x1, y: y0, clearHeight: y1 - y0, front: depth / 2 - 0.03, back: -depth / 2 }
@@ -106,7 +145,16 @@ export const shelfUnit = {
       cylinder(0.035, 0.13, [-0.05, height, 0.03], m.teak),
       cylinder(0.035, 0.13, [0.03, height, 0.0], m.teak),
     )
-    return group(...parts)
+    const result = group(...parts)
+    if (withBed) {
+      const placement = bedPlacement(width, depth)
+      const bed = wallBed(m, placement.height)
+      bed.root.position.set(placement.x, 0, placement.z)
+      bed.set(Boolean(item.bedOpen), { instantly: true })
+      result.add(bed.root)
+      result.userData.bed = bed
+    }
+    return result
   },
 }
 
@@ -114,6 +162,7 @@ export const shelfUnit = {
 export const drawerCabinet = {
   name: 'Ladekast wit met bordeaux',
   size: [0.95, 0.94, 0.7],
+  surfaces: [{ level: 'table', label: 'Ladekast', x: 0, z: 0, w: 0.97, d: 0.71, y: 0.94 }],
   build(m) {
     const [width, height, depth] = this.size
     const front = depth / 2
@@ -222,6 +271,14 @@ function inkjetPrinter(m) {
 export const archiveCabinet = {
   name: 'Archiefkast met uittrekblad',
   size: [1.33, CABINET.height, 1.06],
+  footprint: [
+    { x: -0.175, z: -0.53 + CABINET.depth / 2, w: CABINET.width, d: CABINET.depth },
+    { x: -0.175, z: -0.53 + CABINET.depth + 0.11, w: 0.89, d: 0.5 },
+  ],
+  surfaces: [
+    { level: 'top', label: 'Archiefkast', x: -0.175, z: -0.53 + CABINET.depth / 2, w: CABINET.width, d: CABINET.depth, y: CABINET.height },
+    { level: 'table', label: 'Uittrekblad archiefkast', x: -0.175, z: -0.53 + CABINET.depth + 0.11, w: 0.89, d: 0.5, y: CABINET.pullOut },
+  ],
   build(m) {
     const { width, depth, height, panel } = CABINET
     const back = -this.size[2] / 2

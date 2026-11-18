@@ -5,6 +5,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
+import { enableFacts } from './facts.js'
 import { enableRearranging } from './interaction.js'
 import { consolidate } from './kit.js'
 import { catalog, loadLayout } from './layout.js'
@@ -71,14 +72,25 @@ function addLights() {
   scene.add(daylight)
 }
 
+function buildPiece(piece, materials) {
+  const object = consolidate(piece.spec.build(materials, piece.item))
+  if (piece.object) {
+    object.position.copy(piece.object.position)
+    object.rotation.copy(piece.object.rotation)
+    piece.object.removeFromParent()
+  } else {
+    object.position.set(piece.item.x, 0, piece.item.z)
+    object.rotation.y = THREE.MathUtils.degToRad(piece.item.rotation)
+  }
+  piece.object = object
+  piece.bed = object.userData.bed ?? null
+  scene.add(object)
+  return piece
+}
+
 function addFurniture(materials) {
   return loadLayout().map((item) => {
-    const spec = catalog[item.type]
-    const object = consolidate(spec.build(materials))
-    object.position.set(item.x, 0, item.z)
-    object.rotation.y = THREE.MathUtils.degToRad(item.rotation)
-    scene.add(object)
-    return { item, spec, object }
+    return buildPiece({ item, spec: catalog[item.type], object: null }, materials)
   })
 }
 
@@ -191,7 +203,13 @@ async function start() {
     viewSettled = setTimeout(keepViewInAddress, 400)
   })
   let walking
-  const rearranging = enableRearranging({ canvas, camera, controls, room, pieces, invalidate, invalidateShadows, bounds: ROOM, isPaused: () => Boolean(walking?.isActive()) })
+  const facts = enableFacts({ scene, pieces, bounds: ROOM, invalidate })
+  const rearranging = enableRearranging({
+    canvas, camera, controls, room, pieces, invalidate, invalidateShadows, bounds: ROOM,
+    isPaused: () => Boolean(walking?.isActive()),
+    rebuild: (piece) => buildPiece(piece, materials),
+    onLayoutChange: facts.refresh,
+  })
   function keepStandpointInAddress() {
     if (!walking.isActive()) return
     const url = new URL(location.href)
@@ -259,6 +277,7 @@ async function start() {
     const seconds = Math.min(clock.getDelta(), 0.1)
     if (walking.isActive()) walking.update(seconds)
     else controls.update()
+    for (const piece of pieces) if (piece.bed?.step(seconds)) invalidateShadows()
     if (sharpenAt && performance.now() > sharpenAt) {
       sharpenAt = 0
       setDetail(fullDetail)
